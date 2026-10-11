@@ -123,24 +123,21 @@ input.nr { width:68px; flex:0 0 68px; text-align:center; }
 .tw.on { background:var(--amber); border-color:var(--amber); color:#1a1a1a; }
 
 /* ---------- Live ---------- */
-.board { background:var(--green-d); color:#fff; margin:-16px -16px 0; padding:12px 16px 16px;
-  /* Anzeigetafel bleibt beim Scrollen oben stehen - Uhr und Knoepfe immer im Blick */
-  position:sticky; top:-16px; z-index:5; box-shadow:0 6px 14px rgba(0,0,0,.35); transition:padding .15s; }
-.board.compact { padding:6px 16px 10px; }
-.board.compact .score { font-size:32px; }
-.board.compact .score-row .tn { font-size:13px; }
-.board.compact .clock { font-size:24px; margin-top:0; }
-.board.compact .status { display:none; }
-.board.compact .ctrls { margin-top:6px; }
-.board.compact .ctrls .btn { min-height:42px; font-size:15px; }
+.board { background:var(--green-d); color:#fff; margin:-16px -16px 0; padding:10px 16px 12px;
+  /* Anzeigetafel bleibt beim Scrollen oben stehen - Uhr und Knoepfe immer im Blick.
+     Feste Groesse: eine Tafel, die beim Scrollen schrumpft, verschiebt die Seite und flackert. */
+  position:sticky; top:-16px; z-index:5; box-shadow:0 6px 14px rgba(0,0,0,.35); }
 .score-row { display:flex; align-items:center; gap:12px; max-width:720px; margin:0 auto; }
 .score-row .tn { flex:1; font-size:15px; font-weight:700; line-height:1.25; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
 .score-row .tn.r { text-align:right; }
-.score { font-size:50px; font-weight:900; letter-spacing:1px; }
-.clock { display:block; margin:2px auto 0; font-size:36px; font-weight:800; text-align:center; padding:0 12px; border-radius:10px; }
+button.tn { color:#fff; padding:6px 8px; border-radius:10px; background:rgba(255,255,255,.12); }
+button.tn:active { background:rgba(255,255,255,.28); }
+.score { font-size:44px; font-weight:900; letter-spacing:1px; }
+.clock { display:block; margin:0 auto; font-size:32px; font-weight:800; text-align:center; padding:0 12px; border-radius:10px; }
 .clock.over { color:var(--yellow); }
 .status { text-align:center; font-size:13px; font-weight:600; color:rgba(255,255,255,.8); }
-.ctrls { display:flex; gap:8px; margin:12px auto 0; max-width:720px; }
+.ctrls { display:flex; gap:8px; margin:10px auto 0; max-width:720px; }
+.ctrls .btn { min-height:46px; }
 .ctrls .btn { background:rgba(255,255,255,.95); color:var(--green-d); }
 .ctrls .btn.danger { background:var(--red); color:#fff; }
 .quick { display:flex; gap:8px; margin:8px auto 0; max-width:720px; }
@@ -148,9 +145,7 @@ input.nr { width:68px; flex:0 0 68px; text-align:center; }
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .qbtn:active { background:rgba(0,0,0,.35); }
 .qbtn[disabled] { opacity:.35; }
-.qbtn:last-child { flex:0 0 auto; }
-.board.compact .quick { margin-top:6px; }
-.board.compact .qbtn { min-height:36px; font-size:14px; }
+.qbtn:last-child { flex:0 0 56px; font-size:20px; }
 
 .due { background:var(--amber-soft); border:2px solid var(--amber); border-radius:var(--r); padding:14px; margin-top:16px; }
 .due h3 { margin:0 0 8px; color:var(--amber); font-size:19px; }
@@ -162,27 +157,37 @@ input.nr { width:68px; flex:0 0 68px; text-align:center; }
 .next .s { color:var(--text); font-weight:600; margin-top:2px; }
 
 .grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-.tile { background:var(--surface); border:2px solid var(--green); border-radius:var(--r); padding:10px 12px; min-height:92px; text-align:left; display:block; width:100%; }
+.tile { position:relative; overflow:hidden; background:var(--surface); border:2px solid var(--green); border-radius:12px; padding:0 10px; min-height:48px;
+  text-align:left; display:flex; align-items:center; gap:6px; width:100%; }
 .tile:active { transform:scale(.97); }
 .tile.bench { border-color:var(--line); background:var(--bench); }
 .tile .top { display:flex; align-items:center; gap:6px; }
-.tile .n { font-size:24px; font-weight:900; color:var(--green); }
+.tile .n { font-size:17px; font-weight:900; color:var(--green); min-width:18px; }
 .tile.bench .n { color:var(--muted); }
-.tile .m { margin-left:auto; font-size:14px; font-weight:700; color:var(--muted); }
-.tile .nm { font-size:16px; font-weight:700; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tile .m { margin-left:auto; flex:0 0 auto; font-size:13px; font-weight:700; color:var(--muted); }
+.tile .nm { flex:1; min-width:0; font-size:14px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tile .ib { flex:0 0 auto; display:flex; align-items:center; gap:3px; font-size:12px; font-weight:800; }
+.tile .ib .cardi { width:8px; height:12px; }
+.tile .twb { flex:0 0 auto; font-size:10px; padding:1px 4px; }
+.tile .bar { position:absolute; left:0; right:0; bottom:0; height:3px; margin:0; border-radius:0; }
+.tile .bar i { height:3px; }
 .twb { font-size:11px; font-weight:900; background:var(--amber); color:#1a1a1a; padding:1px 5px; border-radius:5px; }
 .badges { display:flex; align-items:center; gap:6px; height:18px; margin-top:4px; font-size:13px; font-weight:800; }
 .cardi { width:10px; height:14px; border-radius:2px; display:inline-block; }
 .bar { height:4px; background:var(--bg); border-radius:2px; margin-top:8px; overflow:hidden; }
 .bar i { display:block; height:4px; background:var(--green); }
 .sentoff { color:var(--red); font-weight:600; margin-top:8px; }
-.oppbtn { display:block; width:100%; text-align:left; background:var(--opp); color:#fff; border-radius:var(--r); padding:16px; min-height:74px; }
+.oppbtn { display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:var(--opp); color:#fff; border-radius:12px; padding:0 14px; min-height:50px; margin-top:12px; }
 .oppbtn:active { filter:brightness(.85); }
-.oppbtn .t1 { font-size:20px; font-weight:900; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.oppbtn .t2 { font-size:13px; color:rgba(255,255,255,.8); margin-top:2px; }
-.otile { background:var(--opp-soft); border-radius:var(--r); padding:10px 12px; text-align:left; width:100%; }
-.otile .n { font-size:18px; font-weight:900; color:var(--opp-ink); }
-.otile .nm { font-size:15px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.oppbtn .t1 { flex:1; min-width:0; font-size:17px; font-weight:900; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.oppbtn .t2 { flex:0 0 auto; font-size:13px; color:rgba(255,255,255,.85); font-weight:700; }
+.fold { display:flex; align-items:center; gap:8px; width:100%; text-align:left; padding:0; }
+.fold h2 { flex:1; }
+.fold .ar { color:var(--muted); font-size:14px; }
+.otile { background:var(--opp-soft); border-radius:12px; padding:0 10px; min-height:44px; text-align:left; width:100%; display:flex; align-items:center; gap:6px; }
+.otile .n { font-size:16px; font-weight:900; color:var(--opp-ink); min-width:18px; }
+.otile .nm { flex:1; min-width:0; font-size:14px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.otile .ib { flex:0 0 auto; display:flex; align-items:center; gap:3px; font-size:12px; font-weight:800; }
 .ev { display:flex; align-items:center; gap:12px; padding:12px 2px; border-bottom:1px solid var(--line); width:100%; text-align:left; }
 .ev .mi { width:52px; font-size:15px; font-weight:800; }
 .ev .mk { width:4px; align-self:stretch; border-radius:2px; }
@@ -441,7 +446,7 @@ const I18N = {
         '<b>Spieler kommt später?</b> Bei „Bank“ auf „＋ Spieler“ tippen. Ist auf dem Platz noch Platz frei, kommt er mit „Aufs Feld“ ohne Wechsel dazu.',
         '<b>Eigentor:</b> Beim eigenen Spieler zählt es für den Gegner, beim Gegner für dich.',
         '<b>Zurück-Taste:</b> schließt Fenster und geht zurück, beendet die App aber nie – damit am Spielfeldrand nichts verloren geht. Die Uhr läuft auch weiter, wenn du kurz in eine andere App wechselst.',
-        '<b>Schnell notieren:</b> „⚽ Tor“ unter der Uhr – Torschütze wählen oder später eintragen. „↶ Rückgängig“ nimmt den letzten Eintrag zurück.',
+        '<b>Schnell notieren:</b> Auf einen Vereinsnamen oben in der Tafel tippen oder auf „⚽ Wir“ / „⚽ Gegner“ – fertig ist das Tor (beim eigenen Team kurz den Schützen wählen oder später eintragen). „↶“ nimmt den letzten Eintrag zurück.',
         '<b>Feldansicht:</b> Bei „Auf dem Platz“ zwischen Kacheln und Spielfeld umschalten. Rollen aus TacticBoard (Abwehr, Mittelfeld, Sturm) bestimmen die Reihen.',
         '<b>Spiel vergessen?</b> „✎ Spiel nachtragen“ auf der Startseite: Aufstellung wählen, dann Tore, Karten und Wechsel mit Minute eintragen. Auch abgeschlossene Spiele lassen sich im Bericht über „✎ Spiel bearbeiten“ ergänzen.',
         '<b>Spielerprofil & Direktvergleich:</b> In der Statistik einen Spieler antippen, um alle seine Spiele zu sehen. Unten steht die Bilanz gegen jeden Gegner.',
@@ -471,7 +476,9 @@ const I18N = {
     backupNever: n => n + ' Spiele sind nur auf diesem Handy gespeichert. Eine Sicherung schützt sie bei Verlust oder Handywechsel.',
     backupAgo: (d, n) => 'Letzte Sicherung vor ' + d + ' Tagen, seitdem ' + n + ' neue Spiele.',
     notifyText: 'Zeit für einen Wechsel.', notifyChannel: 'Wechselerinnerung',
-    undo: '↶ Rückgängig', undone: x => 'Zurückgenommen: ' + x, quickGoal: n => '⚽ Tor ' + n, quickGoalQ: 'Wer hat getroffen?',
+    undo: '↶', undoAria: 'Letzten Eintrag zurücknehmen', undone: x => 'Zurückgenommen: ' + x, quickGoalQ: 'Wer hat getroffen?',
+    quickOwn: '⚽ Wir', quickOpp: '⚽ Gegner', goalToast: (n, sc) => '⚽ Tor ' + n + ' – ' + sc, nameTap: 'Antippen = Tor',
+    oppBar: 'Tor · Karte ›', foldNotes: 'Notizen', foldTimeline: 'Verlauf',
     scorerLater: 'Torschütze später eintragen', scorerLaterHint: 'Im Verlauf antippen und Spieler wählen',
     blockSub: '⇄ Block-Wechsel', blockHint: 'Mehrere Spieler auf einmal wechseln.', blockOut: 'Raus', blockIn: 'Rein',
     blockNeed: 'Gleich viele raus und rein wählen', blockGo: n => n + ' Wechsel ausführen', blockDone: n => n + ' Wechsel notiert.',
@@ -623,7 +630,7 @@ const I18N = {
         '<b>Player arrives late?</b> Tap “＋ Player” next to the bench. If there is a free spot on the pitch, “Onto the pitch” brings them on without a substitution.',
         '<b>Own goal:</b> by your player it counts for the opponent, by the opponent it counts for you.',
         '<b>Back button:</b> closes dialogs and goes back, but never closes the app – so nothing gets lost on the touchline. The clock keeps running if you briefly switch to another app.',
-        '<b>Quick logging:</b> “⚽ Goal” below the clock – pick the scorer or add them later. “↶ Undo” removes the last entry.',
+        '<b>Quick logging:</b> Tap a club name in the scoreboard or “⚽ Us” / “⚽ Opponent” to log a goal (for your team pick the scorer or add them later). “↶” removes the last entry.',
         '<b>Pitch view:</b> Switch between tiles and a pitch next to “On the pitch”. Roles from TacticBoard (defence, midfield, attack) decide the rows.',
         '<b>Forgot a match?</b> “✎ Add past match” on the home screen: pick the line-up, then add goals, cards and substitutions with their minute. Finished matches can also be completed via “✎ Edit match” in the report.',
         '<b>Player profile & head-to-head:</b> Tap a player in the statistics to see all their matches. At the bottom you find the record against each opponent.',
@@ -653,7 +660,9 @@ const I18N = {
     backupNever: n => n + ' matches are stored only on this phone. A backup protects them if you lose or change your phone.',
     backupAgo: (d, n) => 'Last backup ' + d + ' days ago, ' + n + ' new matches since.',
     notifyText: 'time for a substitution.', notifyChannel: 'Substitution reminder',
-    undo: '↶ Undo', undone: x => 'Undone: ' + x, quickGoal: n => '⚽ Goal ' + n, quickGoalQ: 'Who scored?',
+    undo: '↶', undoAria: 'Undo last entry', undone: x => 'Undone: ' + x, quickGoalQ: 'Who scored?',
+    quickOwn: '⚽ Us', quickOpp: '⚽ Opponent', goalToast: (n, sc) => '⚽ Goal ' + n + ' – ' + sc, nameTap: 'Tap = goal',
+    oppBar: 'Goal · Card ›', foldNotes: 'Notes', foldTimeline: 'Timeline',
     scorerLater: 'Add scorer later', scorerLaterHint: 'Tap it in the timeline and pick the player',
     blockSub: '⇄ Block sub', blockHint: 'Substitute several players at once.', blockOut: 'Off', blockIn: 'On',
     blockNeed: 'Pick the same number off and on', blockGo: n => 'Make ' + n + ' substitutions', blockDone: n => n + ' substitutions logged.',
@@ -708,6 +717,7 @@ const T = () => I18N[LANG];
 document.documentElement.lang = LANG;
 /* Darstellung: dunkel (Standard) oder hell */
 let THEME = (function(){ try { return localStorage.getItem('pp_theme') === 'light' ? 'light' : 'dark'; } catch(e){ return 'dark'; } })();
+let FOLD = (function(){ try { return Object.assign({ notes: true, tl: true }, JSON.parse(localStorage.getItem('pp_fold') || '{}')); } catch(e){ return { notes: true, tl: true }; } })();
 let FIELD_VIEW = (function(){ try { return localStorage.getItem('pp_field') === '1'; } catch(e){ return false; } })();
 function applyTheme(){
   document.documentElement.setAttribute('data-theme', THEME);
@@ -1675,6 +1685,10 @@ function addSub(id, side, outId, inId){
   vibrate(30);
   return eid;
 }
+function goalToast(side){
+  const m = curMatch(); if(!m) return;
+  toast(T().goalToast(teamName(m, side), scoreText(m, derive(m, Clock.game(m.clock, Date.now())).score)));
+}
 /* Nach dem Notieren: im laufenden Spiel Blatt zu; im abgeschlossenen Spiel
    (nachtragen) gleich den Editor oeffnen, damit die Minute eingetragen wird */
 function afterEvent(eid){
@@ -1766,8 +1780,6 @@ function renderNow(resetScroll){
   else if(r.v === 'player') html = viewPlayer(r);
   view.innerHTML = '<div class="wrap">' + html + '</div>';
   view.scrollTop = resetScroll ? 0 : keep;
-  const board = view.querySelector('.board');
-  if(board && view.scrollTop > 80) board.classList.add('compact');
   if(r.v === 'live') tick(true);
 }
 
@@ -2025,13 +2037,19 @@ function viewLive(r){
   else ctr = '<button class="btn" data-act="goReport">' + esc(t.viewReport) + '</button>';
 
   const so = shootoutScore(m);
-  let h = '<div class="board"><div class="score-row"><div class="tn r">' + esc(home) + '</div><div class="score num">' +
-    scoreText(m, st.score) + '</div><div class="tn">' + esc(away) + '</div></div>' +
+  // Vereinsnamen sind Schnelltasten fuer ein Tor (ab Anpfiff)
+  const nameBtn = (side, cls) => c.status === 'pre' ? '<div class="tn' + cls + '">' + esc(teamName(m, side)) + '</div>'
+    : '<button class="tn' + cls + '" data-act="teamGoal" data-side="' + side + '" aria-label="' + esc(t.nameTap + ': ' + teamName(m, side)) + '">' + esc(teamName(m, side)) + '</button>';
+  let h = '<div class="board"><div class="score-row">' + nameBtn(m.isHome ? 'own' : 'opp', ' r') + '<div class="score num">' +
+    scoreText(m, st.score) + '</div>' + nameBtn(m.isHome ? 'opp' : 'own', '') + '</div>' +
     (so ? '<div class="status num" style="font-size:15px;color:#fff">' + esc(t.soShort) + ' ' + scoreText(m, so) + '</div>' : '') +
     '<button class="clock num" id="clock" data-act="clockFix">' + displayClock(m, now) + '</button>' +
     '<div class="status" id="status"></div><div class="ctrls">' + ctr + '</div>' +
-    (c.status !== 'pre' ? '<div class="quick"><button class="qbtn" data-act="quickGoal">' + esc(t.quickGoal(m.ownName)) + '</button>' +
-      '<button class="qbtn" data-act="undo"' + (m.events.length ? '' : ' disabled') + '>' + esc(t.undo) + '</button></div>' : '') + '</div>';
+    (c.status !== 'pre' ? '<div class="quick"><button class="qbtn" data-act="quickGoal">' + esc(t.quickOwn) + '</button>' +
+      '<button class="qbtn" data-act="teamGoal" data-side="opp">' + esc(t.quickOpp) + '</button>' +
+      '<button class="qbtn" data-act="undo" aria-label="' + esc(t.undoAria) + '"' + (m.events.length ? '' : ' disabled') + '>' + esc(t.undo) + '</button></div>' : '') + '</div>' +
+    // Gegner direkt unter der Tafel
+    '<button class="oppbtn" data-act="opp"><span class="t1">' + esc(m.oppName) + '</span><span class="t2">' + esc(t.oppBar) + '</span></button>';
 
   if(c.status === 'finished') h += '<div class="next" style="margin-top:12px;color:var(--text)">' + esc(t.editHint) + (m.manual ? ' ' + esc(t.editHintManual) : '') + '</div>';
   if(c.status === 'finished' && st.score.own === st.score.opp && !m.shootout){
@@ -2067,10 +2085,10 @@ function viewLive(r){
   const share = s.fairPlay ? fairShare(m) : 0;
   const tile = (id, bench) => {
     const p = findP(m, id), ps = st.stats[id];
-    return '<button class="tile' + (bench ? ' bench' : '') + '" data-act="ownPlayer" data-id="' + id + '"><div class="top"><span class="n num">' +
-      (p.number == null ? '–' : p.number) + '</span>' + (st.keeperId === id ? '<span class="twb">TW</span>' : '') +
-      '<span class="m num" data-min="' + id + '">' + Math.floor(ps.played / 60000) + "'</span></div>" +
-      '<div class="nm">' + esc(p.name) + '</div>' + badges(ps) +
+    return '<button class="tile' + (bench ? ' bench' : '') + '" data-act="ownPlayer" data-id="' + id + '">' +
+      (p.number != null ? '<span class="n num">' + p.number + '</span>' : '') + '<span class="nm">' + esc(p.name) + '</span>' +
+      (st.keeperId === id ? '<span class="twb">TW</span>' : '') + inlineBadges(ps) +
+      '<span class="m num" data-min="' + id + '">' + Math.floor(ps.played / 60000) + "'</span>" +
       (share ? '<div class="bar"><i data-bar="' + id + '" style="width:' + Math.min(100, ps.played / share * 100) + '%"></i></div>' : '') + '</button>';
   };
   h += '<div class="sec"><h2>' + esc(t.onPitch) + ' · ' + esc(m.ownName) + '</h2><span>' + (st.onField.length ? '<button class="link" data-act="fieldView" style="margin-right:12px">' +
@@ -2081,16 +2099,19 @@ function viewLive(r){
     (st.bench.length ? '<div class="grid">' + st.bench.map(id => tile(id, true)).join('') + '</div>' : '<div class="empty">' + esc(t.nobodyBench) + '</div>');
   if(st.sentOff.length) h += '<div class="sentoff">' + esc(t.sentOff) + ': ' + st.sentOff.map(id => esc(pShort(findP(m, id)))).join(', ') + '</div>';
 
-  h += '<div class="sec"><h2>' + esc(t.oppT) + '</h2><button class="link" data-act="addLate" data-side="opp">' + esc(t.addPlayer) + '</button></div>' +
-    '<button class="oppbtn" data-act="opp"><div class="t1">' + esc(m.oppName) + '</div><div class="t2">' + esc(t.oppHint) + '</div></button>';
-  if(m.oppPlayers.length) h += '<div class="grid" style="margin-top:8px">' + m.oppPlayers.slice().sort(byNumber).map(p =>
-    '<button class="otile" data-act="opp" data-id="' + p.id + '"><div class="n num">' + (p.number == null ? '–' : p.number) + '</div><div class="nm">' +
-    esc(p.name) + '</div>' + badges(st.stats[p.id]) + '</button>').join('') + '</div>';
+  h += '<div class="sec"><h2>' + esc(t.oppT) + ' · ' + esc(m.oppName) + '</h2><button class="link" data-act="addLate" data-side="opp">' + esc(t.addPlayer) + '</button></div>';
+  if(m.oppPlayers.length) h += '<div class="grid">' + m.oppPlayers.slice().sort(byNumber).map(p =>
+    '<button class="otile" data-act="opp" data-id="' + p.id + '">' + (p.number != null ? '<span class="n num">' + p.number + '</span>' : '') + '<span class="nm">' +
+    esc(p.name) + '</span>' + inlineBadges(st.stats[p.id]) + '</button>').join('') + '</div>';
+  else h += '<div class="hint" style="margin-top:0">' + esc(t.oppHint) + '</div>';
 
-  h += '<div class="sec"><h2>' + esc(t.notes) + '</h2><button class="link" data-act="noteStamp">' + esc(t.noteStamp) + '</button></div>' +
-    '<textarea class="in notes" id="notes" placeholder="' + esc(t.notesPh) + '" rows="3">' + esc(m.notes || '') + '</textarea>';
-  h += '<div class="sec"><h2>' + esc(t.timeline) + '</h2></div>';
-  h += m.events.length ? sortEvents(m.events).reverse().map(e => '<button class="ev" data-act="event" data-id="' + e.id + '"><span class="mi num">' +
+  const nLines = (m.notes || '').split('\n').filter(x => x.trim()).length;
+  const foldHead = (k, label, n, extra) => '<div class="sec"><button class="fold" data-act="fold" data-k="' + k + '" aria-expanded="' + !FOLD[k] + '"><h2>' +
+    esc(label) + (n ? ' (' + n + ')' : '') + '</h2><span class="ar">' + (FOLD[k] ? '▸' : '▾') + '</span></button>' + (extra || '') + '</div>';
+  h += foldHead('notes', t.foldNotes, nLines, FOLD.notes ? '' : '<button class="link" data-act="noteStamp" style="margin-left:12px">' + esc(t.noteStamp) + '</button>');
+  if(!FOLD.notes) h += '<textarea class="in notes" id="notes" placeholder="' + esc(t.notesPh) + '" rows="3">' + esc(m.notes || '') + '</textarea>';
+  h += foldHead('tl', t.foldTimeline, m.events.length);
+  if(!FOLD.tl) h += m.events.length ? sortEvents(m.events).reverse().map(e => '<button class="ev" data-act="event" data-id="' + e.id + '"><span class="mi num">' +
     fmtMinute(e, m) + '</span><span class="mk" style="background:' + evColor(e) + '"></span><span class="tx">' + esc(describe(m, e)) +
     (e.side === 'opp' && e.type !== 'goal' && e.playerId ? ' (' + esc(m.oppName) + ')' : '') + '</span></button>').join('') : '<div class="empty">' + esc(t.noEvents) + '</div>';
   return h;
@@ -2196,6 +2217,18 @@ function badges(ps){
   if(ps.yellowRed) b += '<span class="cardi" style="background:var(--amber)"></span>';
   if(ps.red) b += '<span class="cardi" style="background:var(--red)"></span>';
   return '<div class="badges">' + b + '</div>';
+}
+
+function inlineBadges(ps){
+  if(!ps) return '';
+  let b = '';
+  if(ps.goals) b += '<span>⚽' + (ps.goals > 1 ? ps.goals : '') + '</span>';
+  if(ps.assists) b += '<span class="ast">' + esc(T().assistShort) + (ps.assists > 1 ? ps.assists : '') + '</span>';
+  if(ps.own) b += '<span>ET</span>';
+  if(ps.yellow) b += '<span class="cardi" style="background:var(--yellow)"></span>';
+  if(ps.yellowRed) b += '<span class="cardi" style="background:var(--amber)"></span>';
+  if(ps.red) b += '<span class="cardi" style="background:var(--red)"></span>';
+  return b ? '<span class="ib">' + b + '</span>' : '';
 }
 
 /* ----- Statistik ----- */
@@ -2548,16 +2581,6 @@ function syncNotification(now){
 
 setInterval(() => tick(false), 500);
 setInterval(() => syncNotification(Date.now()), 1000);
-/* Kompakte Tafel beim Scrollen. Mit Abstand zwischen Ein- und Ausschalten,
-   denn die kleinere Tafel verkuerzt die Seite - sonst flackert es. */
-function updateCompact(){
-  const v = $('view'), b = v.querySelector('.board');
-  if(!b) return;
-  const room = v.scrollHeight - v.clientHeight;
-  if(!b.classList.contains('compact') && v.scrollTop > 80 && room > 300) b.classList.add('compact');
-  else if(b.classList.contains('compact') && v.scrollTop < 8) b.classList.remove('compact');
-}
-$('view').addEventListener('scroll', updateCompact, { passive: true });
 document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible'){ wakeLock = null; tick(false); } });
 
 /* ---------------------------------------------------------------------
@@ -2595,6 +2618,11 @@ const A = {
   onbNext(){ ONB = Math.min(ONB + 1, T().onbSteps.length - 1); renderOnb(); },
   onbEnd(){ ONB = -1; try { localStorage.setItem('pp_onboarding_done', '1'); } catch(e){} renderOnb(); },
   onbShow(){ ONB = 0; renderOnb(); },
+  fold(el){
+    const k = el.dataset.k; FOLD[k] = !FOLD[k];
+    try { localStorage.setItem('pp_fold', JSON.stringify(FOLD)); } catch(e){}
+    render(false);
+  },
   fieldView(){ FIELD_VIEW = !FIELD_VIEW; try { localStorage.setItem('pp_field', FIELD_VIEW ? '1' : '0'); } catch(e){} render(false); },
   goPlayer(el){ const r = cur(); go({ v: 'player', team: r.id, id: el.dataset.id, range: r.range }); },
   statsOpp(el){ const r = cur(); r.opp = r.opp === el.dataset.k ? null : el.dataset.k; render(false); },
@@ -2942,7 +2970,25 @@ const A = {
   quickGoalDo(el){
     const m = curMatch();
     const eid = pushEvent(m.id, { type: 'goal', side: 'own', kind: 'normal', playerId: el.dataset.p || null });
+    goalToast('own');
     if(m.settings.assists && el.dataset.p){ render(false); openAssistPicker(curMatch(), eid, el.dataset.p); return; }
+    afterEvent(eid);
+  },
+  /* Schnelltaste Tor: eigenes Team -> Torschuetze waehlen; Gegner -> sofort
+     (mit gespeichertem Kader erst Spielerauswahl) */
+  teamGoal(el){
+    const t = T(), m = curMatch(); if(!m || m.clock.status === 'pre') return;
+    if(el.dataset.side === 'own'){ A.quickGoal(); return; }
+    if(m.oppPlayers.length){
+      openSheet(t.quickGoalQ, m.oppName, act('oppGoalDo', t.goal + ' ' + m.oppName, t.noName, 'var(--opp)', ' data-p=""') +
+        m.oppPlayers.slice().sort(byNumber).map(p => act('oppGoalDo', pLabel(p), '', 'var(--opp)', ' data-p="' + p.id + '"')).join(''));
+      return;
+    }
+    A.oppGoalDo({ dataset: { p: '' } });
+  },
+  oppGoalDo(el){
+    const eid = pushEvent(cur().id, { type: 'goal', side: 'opp', kind: 'normal', playerId: el.dataset.p || null });
+    goalToast('opp');
     afterEvent(eid);
   },
   blockSub(){ openBlockSub(new Set(), new Set()); },
