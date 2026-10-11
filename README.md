@@ -5,6 +5,8 @@ Cordova-Builds über GitHub Actions für Google Play und den App Store, Deutsch/
 
 ## Funktionen
 
+- **Mehrere Mannschaften** – jede als „Mein Team“ anlegen, oben auf der Startseite wechseln.
+  Neues Spiel, Spielliste und Statistik beziehen sich auf die gewählte Mannschaft.
 - **Teams & Kader** – Spieler einzeln, als eingefügte Liste (DFBnet, Excel, WhatsApp) oder als
   **Kader-Datei aus TacticBoard**.
 - **Spieltag einfügen** – der geteilte Spieltag aus dem Kaderplaner (derselbe Text, den TacticBoard
@@ -15,11 +17,24 @@ Cordova-Builds über GitHub Actions für Google Play und den App Store, Deutsch/
   Nachspielzeit, Uhr-Korrektur. Spieler antippen → Tor, Elfmeter, Eigentor, Gelb, Gelb-Rot, Rot,
   Wechsel. Gegner: Tipp auf den Vereinsnamen genügt, mit Kader auch pro Spieler. Spieler nachtragen.
   Verlauf mit Löschen – Spielstand und Spielzeiten rechnen sich neu.
+- **Ereignisse bearbeiten** – Minute, Spieler, Elfmeter, Vorlage, Kartenart nachträglich ändern.
+- **Vorlagen** (Option je Spiel) – nach jedem eigenen Tor kurze Abfrage, auch in der Statistik.
+- **Notizen** pro Spiel mit Minuten-Stempel; im Bericht wählbar, ob sie mitgeteilt werden.
+- **Verlängerung und Elfmeterschießen** bei Gleichstand nach Abpfiff (Bilanz zählt den Sieger i. E.).
 - **Wechselerinnerung** – feste Intervalle *und* „Faire Spielzeit“ (Spielzeit je Spieler,
   konkrete Wechselvorschläge, Torwart ausgenommen). Fällige Wechsel: Hinweis, Vibration, Signalton.
-  Der Bildschirm bleibt an, solange die Uhr läuft (Wake Lock, wo das System es zulässt).
+  Der Bildschirm bleibt an, solange die Uhr läuft (Plugin `cordova-plugin-insomnia`). Bei gesperrtem
+  Display oder in einer anderen App kommt eine Benachrichtigung (`cordova-plugin-local-notification`;
+  auf Android ohne Sonderrecht für exakte Wecker, daher im Energiesparmodus evtl. etwas verzögert).
 - **Spielbericht** – Ergebnis, Halbzeitstand, Torfolge, Karten, Wechsel, Spielzeiten; als Text teilen.
-- **Sicherung** – alle Teams und Spiele als Datei exportieren/importieren (⚙︎).
+- **Statistik** – über alle abgeschlossenen Spiele eines Teams: Bilanz (gesamt, Heim, Auswärts),
+  pro Spieler Einsätze, Startelf, Minuten, Ø Minuten, Anteil an der Spielzeit, Tore (Elfmeter),
+  Eigentore, Karten. Zeitraum Saison / Hinrunde / Rückrunde / Gesamt (Saison ab 1. Juli),
+  sortierbar, als Text teilbar oder als CSV-Tabelle exportierbar.
+- **Über PitchPro** (ⓘ oben rechts) – Erklärung der App und Tipps.
+- **Zurück-Taste (Android)** – schließt Fenster und geht zurück, beendet die App aber nie.
+- **Sicherung** – alle Teams und Spiele als Datei exportieren/importieren (⚙︎). Ab 3 neuen Spielen und
+  30 Tagen ohne Sicherung erinnert die Startseite daran.
 
 ## Zusammenspiel mit TacticBoard
 
@@ -32,9 +47,9 @@ Cordova-Builds über GitHub Actions für Google Play und den App Store, Deutsch/
 Beim Anpfiff setzt PitchPro die „dabei“-Haken auf die Spieler dieses Spiels – exportiert man danach,
 stehen in TacticBoard genau diese Spieler zur Aufstellung bereit.
 
-**Für später in TacticBoard (Vorschlag):** ein Knopf „Aufstellung teilen“, der den Spieltag-Text mit
-den Abschnitten `*Startelf (n)*` und `*Bank (n)*` erzeugt. PitchPro versteht dieses Format bereits und
-übernimmt dann Start und Bank direkt vom Taktikbrett.
+**Aufstellung vom Taktikbrett:** In TacticBoard (ab der Version mit „📲 Aufstellung an PitchPro“ im
+Kader-Dialog) wird der Spieltag-Text mit `*Startelf (n)*` und `*Bank (n)*` geteilt. In PitchPro unter
+„📋 Spieltag einfügen“ eingefügt, sind Start, Bank, Torwart und – aus dem Taktiknamen – der Gegner übernommen.
 
 ## Builds
 
@@ -52,7 +67,9 @@ Wie bei TacticBoard – die Workflows sind übernommen und auf PitchPro angepass
   (gleicher Rasen wie TacticBoard); `tools/` erzeugt daraus alle Größen.
 - Teilen-Plugin `plugins/cordova-plugin-tb-share` ist das TacticBoard-Plugin, ergänzt um
   `shareText` (Spielbericht direkt an WhatsApp & Co.) und Ordnernamen nach App-Name.
-  Gleiche Änderung kann TacticBoard bei Gelegenheit übernehmen.
+  TacticBoard nutzt dieselbe Fassung des Plugins.
+- Weitere Plugins, nur in den Workflows eingebunden: `cordova-plugin-insomnia@4.3.0` (Bildschirm an),
+  `cordova-plugin-local-notification@1.2.3` (Wechselerinnerung bei gesperrtem Display).
 
 ## Lokal ausprobieren
 
