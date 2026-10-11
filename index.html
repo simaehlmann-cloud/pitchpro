@@ -20,8 +20,18 @@
   --opp:#2a6f97; --opp-soft:#1f3442;
   --yellow:#f4c20d; --red:#e53935; --amber:#ff9f1c; --amber-soft:#3d2c12;
   --top:#111111;
+  --soft-ink:#a5e0a8; --bench:#202020; --opp-ink:#7fb8dc;
   --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
   --r:14px;
+}
+/* Hell-Modus: besser lesbar in praller Sonne */
+:root[data-theme="light"] {
+  --bg:#eef2ee; --surface:#ffffff; --surface2:#e6ece7; --line:#c9d3cb;
+  --text:#0e1a12; --muted:#4f5d54;
+  --green:#2e7d32; --green-d:#1f6b2a; --green-soft:#dcefdf;
+  --opp:#2a6f97; --opp-soft:#dde9f3;
+  --amber-soft:#fff1d6; --amber:#c76a00;
+  --top:#0b3d1f; --soft-ink:#1b5e20; --bench:#f4f6f4; --opp-ink:#1f5f86;
 }
 * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 html, body { margin:0; height:100%; background:var(--bg); color:var(--text);
@@ -32,16 +42,21 @@ button { font:inherit; color:inherit; border:0; background:none; cursor:pointer;
 .num { font-variant-numeric:tabular-nums; }
 
 /* ---------- Kopfzeile ---------- */
-#top { background:var(--top); padding:calc(var(--safe-t) + 6px) 8px 8px; display:flex; align-items:center; gap:4px; min-height:56px; flex:0 0 auto; }
+#top { color:#fff; background:var(--top); padding:calc(var(--safe-t) + 6px) 8px 8px; display:flex; align-items:center; gap:4px; min-height:56px; flex:0 0 auto; }
 #top .title { flex:1; font-size:19px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding-left:6px; }
 #top button { min-width:44px; height:44px; padding:0 10px; border-radius:10px; font-size:16px; font-weight:700; }
 #top button:active { background:#222; }
 #back { font-size:26px !important; }
 .brand { display:inline-flex; align-items:center; gap:12px; }
 .brand img { border-radius:10px; flex:0 0 38px; box-shadow:0 2px 8px rgba(0,0,0,.4); }
-.brand span { font-size:28px; font-weight:900; letter-spacing:.3px; }
+.brand span { font-size:27px; font-weight:900; letter-spacing:.2px; }
+@media (max-width:360px){ .brand span { font-size:22px; } .brand img { width:32px; height:32px; flex-basis:32px; } }
 #top button#right, #top button#right2 { font-size:22px; }
-#back[hidden], #right[hidden], #right2[hidden] { display:none; }
+#back[hidden], #right[hidden], #right2[hidden], #flags[hidden] { display:none; }
+#flags { display:flex; gap:4px; margin-right:2px; }
+#top button.flag { min-width:0; width:42px; height:40px; padding:0; display:flex; align-items:center; justify-content:center; border-radius:8px; }
+.flag svg { border-radius:3px; opacity:.45; transition:opacity .15s, transform .15s; box-shadow:0 0 0 1px rgba(255,255,255,.25); }
+.flag.on svg { opacity:1; transform:scale(1.1); box-shadow:0 0 0 2px #fff; }
 
 #view { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:16px 16px calc(var(--safe-b) + 90px); }
 .wrap { max-width:720px; margin:0 auto; }
@@ -56,7 +71,7 @@ button { font:inherit; color:inherit; border:0; background:none; cursor:pointer;
   border-radius:var(--r); font-size:16px; font-weight:800; background:var(--green); color:#fff; }
 .btn:active { filter:brightness(0.85); }
 .btn.lg { min-height:60px; font-size:19px; }
-.btn.soft { background:var(--green-soft); color:#a5e0a8; }
+.btn.soft { background:var(--green-soft); color:var(--soft-ink); }
 .btn.ghost { background:transparent; border:1.5px solid var(--line); color:var(--text); }
 .btn.danger { background:var(--red); }
 .btn.opp { background:var(--opp); }
@@ -89,7 +104,7 @@ input.nr { width:68px; flex:0 0 68px; text-align:center; }
 .step { display:flex; align-items:center; justify-content:space-between; padding:6px 0; gap:8px; }
 .step .lbl { font-size:16px; flex:1; }
 .step .ctl { display:flex; align-items:center; gap:6px; }
-.step .ctl button { width:44px; height:44px; border-radius:22px; background:var(--green-soft); color:#a5e0a8; font-size:24px; font-weight:700; }
+.step .ctl button { width:44px; height:44px; border-radius:22px; background:var(--green-soft); color:var(--soft-ink); font-size:24px; font-weight:700; }
 .step .val { min-width:66px; text-align:center; font-size:17px; font-weight:800; }
 .toggle { display:flex; align-items:center; gap:12px; padding-top:10px; width:100%; text-align:left; }
 .sw { width:52px; height:32px; border-radius:16px; background:var(--line); padding:3px; flex:0 0 52px; transition:background .15s; }
@@ -108,7 +123,7 @@ input.nr { width:68px; flex:0 0 68px; text-align:center; }
 .tw.on { background:var(--amber); border-color:var(--amber); color:#1a1a1a; }
 
 /* ---------- Live ---------- */
-.board { background:var(--green-d); margin:-16px -16px 0; padding:12px 16px 16px;
+.board { background:var(--green-d); color:#fff; margin:-16px -16px 0; padding:12px 16px 16px;
   /* Anzeigetafel bleibt beim Scrollen oben stehen - Uhr und Knoepfe immer im Blick */
   position:sticky; top:-16px; z-index:5; box-shadow:0 6px 14px rgba(0,0,0,.35); transition:padding .15s; }
 .board.compact { padding:6px 16px 10px; }
@@ -128,6 +143,14 @@ input.nr { width:68px; flex:0 0 68px; text-align:center; }
 .ctrls { display:flex; gap:8px; margin:12px auto 0; max-width:720px; }
 .ctrls .btn { background:rgba(255,255,255,.95); color:var(--green-d); }
 .ctrls .btn.danger { background:var(--red); color:#fff; }
+.quick { display:flex; gap:8px; margin:8px auto 0; max-width:720px; }
+.qbtn { flex:1; min-height:40px; border-radius:10px; background:rgba(0,0,0,.22); color:#fff; font-weight:800; font-size:15px; padding:0 10px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.qbtn:active { background:rgba(0,0,0,.35); }
+.qbtn[disabled] { opacity:.35; }
+.qbtn:last-child { flex:0 0 auto; }
+.board.compact .quick { margin-top:6px; }
+.board.compact .qbtn { min-height:36px; font-size:14px; }
 
 .due { background:var(--amber-soft); border:2px solid var(--amber); border-radius:var(--r); padding:14px; margin-top:16px; }
 .due h3 { margin:0 0 8px; color:var(--amber); font-size:19px; }
@@ -141,7 +164,7 @@ input.nr { width:68px; flex:0 0 68px; text-align:center; }
 .grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
 .tile { background:var(--surface); border:2px solid var(--green); border-radius:var(--r); padding:10px 12px; min-height:92px; text-align:left; display:block; width:100%; }
 .tile:active { transform:scale(.97); }
-.tile.bench { border-color:var(--line); background:#202020; }
+.tile.bench { border-color:var(--line); background:var(--bench); }
 .tile .top { display:flex; align-items:center; gap:6px; }
 .tile .n { font-size:24px; font-weight:900; color:var(--green); }
 .tile.bench .n { color:var(--muted); }
@@ -153,12 +176,12 @@ input.nr { width:68px; flex:0 0 68px; text-align:center; }
 .bar { height:4px; background:var(--bg); border-radius:2px; margin-top:8px; overflow:hidden; }
 .bar i { display:block; height:4px; background:var(--green); }
 .sentoff { color:var(--red); font-weight:600; margin-top:8px; }
-.oppbtn { display:block; width:100%; text-align:left; background:var(--opp); border-radius:var(--r); padding:16px; min-height:74px; }
+.oppbtn { display:block; width:100%; text-align:left; background:var(--opp); color:#fff; border-radius:var(--r); padding:16px; min-height:74px; }
 .oppbtn:active { filter:brightness(.85); }
 .oppbtn .t1 { font-size:20px; font-weight:900; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .oppbtn .t2 { font-size:13px; color:rgba(255,255,255,.8); margin-top:2px; }
 .otile { background:var(--opp-soft); border-radius:var(--r); padding:10px 12px; text-align:left; width:100%; }
-.otile .n { font-size:18px; font-weight:900; color:#7fb8dc; }
+.otile .n { font-size:18px; font-weight:900; color:var(--opp-ink); }
 .otile .nm { font-size:15px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .ev { display:flex; align-items:center; gap:12px; padding:12px 2px; border-bottom:1px solid var(--line); width:100%; text-align:left; }
 .ev .mi { width:52px; font-size:15px; font-weight:800; }
@@ -174,10 +197,10 @@ input.nr { width:68px; flex:0 0 68px; text-align:center; }
 .about-head .ah1 { font-size:24px; font-weight:900; }
 .about p { margin:0; font-size:15px; line-height:1.55; }
 .about p + p { margin-top:10px; }
-.about b { color:#a5e0a8; }
+.about b { color:var(--soft-ink); }
 .notes { min-height:84px; font-size:16px; background:var(--surface); }
 .notes-view { white-space:pre-wrap; font-size:15px; line-height:1.5; user-select:text; -webkit-user-select:text; }
-.ast { color:#a5e0a8; }
+.ast { color:var(--soft-ink); }
 .so-row { padding:10px 0; border-top:1px solid var(--line); }
 .so-name { font-weight:700; margin-bottom:6px; }
 .so-dots { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; min-height:22px; }
@@ -210,6 +233,47 @@ input.nr { width:68px; flex:0 0 68px; text-align:center; }
 .pt .r { display:flex; justify-content:space-between; font-size:15px; font-weight:600; }
 .pt .bar { height:6px; margin-top:4px; }
 
+/* Feldansicht */
+.pitch { position:relative; width:100%; max-width:460px; margin:0 auto; border-radius:var(--r); overflow:hidden;
+  background:repeating-linear-gradient(180deg,#2e8b3a 0 10%,#287f35 10% 20%); border:2px solid rgba(255,255,255,.35); }
+.pitch::before { content:''; display:block; padding-top:118%; }
+.pitch i { position:absolute; border:2px solid rgba(255,255,255,.45); pointer-events:none; }
+.pitch .box { left:22%; right:22%; bottom:-2px; height:15%; }
+.pitch .six { left:37%; right:37%; bottom:-2px; height:6%; }
+.pitch .circ { left:50%; top:0; width:30%; padding-top:30%; transform:translate(-50%,-50%); border-radius:50%; }
+.pp { position:absolute; transform:translate(-50%,-50%); width:72px; display:flex; flex-direction:column; align-items:center; color:#fff; }
+.pp:active { transform:translate(-50%,-50%) scale(.94); }
+.pp .dotn { position:relative; width:44px; height:44px; border-radius:50%; background:#fff; color:#1f6b2a; font-weight:900; font-size:18px;
+  display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(0,0,0,.35); }
+.pp.kp .dotn { background:var(--amber); color:#1a1a1a; }
+.pp .pn { font-size:12px; font-weight:800; margin-top:3px; max-width:72px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-shadow:0 1px 2px rgba(0,0,0,.7); }
+.pp .pm { font-size:11px; font-weight:700; text-shadow:0 1px 2px rgba(0,0,0,.7); }
+.pp .pg { position:absolute; top:-6px; right:-10px; font-size:12px; background:#fff; color:#111; border-radius:9px; padding:0 4px; line-height:18px; }
+.pp .pc { position:absolute; top:-4px; left:-6px; width:10px; height:14px; border-radius:2px; }
+/* Wechselplan, Profil */
+.plan-row { padding:10px 12px; }
+.plan-row .pnum { width:auto; min-width:40px; }
+.plan-now { font-size:16px; font-weight:700; margin-bottom:10px; line-height:1.4; }
+button.sp { display:block; width:100%; text-align:left; }
+button.sp:active { background:var(--surface2); }
+.kpis { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:12px; }
+.kpi { background:var(--surface2); border-radius:10px; padding:10px 8px; text-align:center; }
+.kpi b { display:block; font-size:22px; font-weight:900; }
+.kpi span { font-size:11px; color:var(--muted); font-weight:700; }
+.res { flex:0 0 30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-weight:900; color:#fff; font-size:14px; }
+/* Einfuehrung */
+#onb { position:fixed; inset:0; z-index:30; background:var(--bg); display:flex; flex-direction:column; padding:calc(var(--safe-t) + 14px) 22px calc(var(--safe-b) + 22px); }
+#onb[hidden] { display:none; }
+#onb .otop { display:flex; align-items:center; gap:6px; }
+#onb .ob { flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; max-width:460px; margin:0 auto; }
+#onb .oi { font-size:72px; line-height:1; margin-bottom:18px; }
+#onb h2 { font-size:26px; font-weight:900; margin:0 0 10px; }
+#onb p { font-size:17px; line-height:1.5; color:var(--muted); margin:0; }
+#onb .dots { display:flex; gap:8px; justify-content:center; margin:22px 0 18px; }
+#onb .dots i { width:9px; height:9px; border-radius:5px; background:var(--line); }
+#onb .dots i.on { background:var(--green); width:24px; }
+#onb .flag { width:42px; height:40px; display:flex; align-items:center; justify-content:center; border-radius:8px; }
+
 /* ---------- Auswahlblatt ---------- */
 #ov { position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; z-index:20; }
 #ov.open { display:block; }
@@ -238,6 +302,10 @@ input.nr { width:68px; flex:0 0 68px; text-align:center; }
 <header id="top">
   <button id="back" data-act="back" aria-label="Zurück" hidden>‹</button>
   <div class="title" id="title">PitchPro</div>
+  <div id="flags" hidden>
+    <button class="flag" data-act="lang" data-v="de" aria-label="Deutsch"><svg viewBox="0 0 5 3" width="30" height="18" aria-hidden="true"><rect width="5" height="1" y="0" fill="#000"/><rect width="5" height="1" y="1" fill="#DD0000"/><rect width="5" height="1" y="2" fill="#FFCE00"/></svg></button>
+    <button class="flag" data-act="lang" data-v="en" aria-label="English"><svg viewBox="0 0 60 30" width="30" height="18" aria-hidden="true"><clipPath id="gbc"><path d="M30,15 h30 v15 z v15 h-30 z h-30 v-15 z v-15 h30 z"/></clipPath><path d="M0,0 v30 h60 v-30 z" fill="#012169"/><path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" stroke-width="6"/><path d="M0,0 L60,30 M60,0 L0,30" clip-path="url(#gbc)" stroke="#C8102E" stroke-width="4"/><path d="M30,0 v30 M0,15 h60" stroke="#fff" stroke-width="10"/><path d="M30,0 v30 M0,15 h60" stroke="#C8102E" stroke-width="6"/></svg></button>
+  </div>
   <button id="right2" hidden></button>
   <button id="right" hidden></button>
 </header>
@@ -245,7 +313,8 @@ input.nr { width:68px; flex:0 0 68px; text-align:center; }
 <div id="ov" data-act="closeSheet"></div>
 <div id="sheet" role="dialog" aria-modal="true"></div>
 <div id="toast"></div>
-<input type="file" id="file-in" accept=".json,application/json,text/plain" style="display:none" />
+<div id="onb" hidden></div>
+<input type="file" id="file-in" accept=".json,.csv,.txt,application/json,text/csv,text/plain,text/comma-separated-values" style="display:none" />
 
 <!-- Wird nur in den App-Builds (Android und iOS) von Cordova bereitgestellt.
      Ohne diese Datei gibt es kein "deviceready": keine Zurueck-Taste, keine
@@ -271,7 +340,7 @@ const I18N = {
     heroText: 'Tore, Karten und Wechsel mit einem Tipp – inklusive Spielzeiten und Wechselerinnerung.',
     firstTeam: 'Zuerst mein Team anlegen', newMatch: 'Neues Spiel', teamsBtn: 'Teams & Kader',
     pasteMatchday: '📋 Spieltag einfügen',
-    pasteMatchdayHint: 'Geteilten Spieltag aus dem Kaderplaner oder eine Aufstellung aus TacticBoard einfügen – das Spiel wird direkt vorbereitet.',
+    pasteMatchdayHint: 'Geteilten Spieltag oder eine geteilte Aufstellung einfügen – das Spiel wird direkt vorbereitet.',
     liveMatches: 'Laufende Spiele', pastMatches: 'Vergangene Spiele', noPast: 'Noch keine abgeschlossenen Spiele.',
     running: 'läuft', longPressDelete: 'Lange tippen zum Löschen',
     delMatchQ: 'Spiel löschen?', delMatchText: (a, b) => a + ' – ' + b + ' wird endgültig gelöscht.',
@@ -285,12 +354,14 @@ const I18N = {
     noOwnTeam: 'Lege dein eigenes Team an, um Spiele zu starten.',
     noOpps: 'Optional. Ohne Gegnerkader tippst du im Spiel einfach auf den Vereinsnamen.',
     nPlayers: n => n + ' Spieler',
-    importTB: '📥 Kader aus TacticBoard', importTBHint: 'In TacticBoard unter 👥 Kader → „📤 Kader exportieren“ die Datei sichern und hier öffnen.',
+    importSquad: '📥 Kader importieren', importSquadHint: 'Kader-Datei, CSV-Tabelle (z. B. aus Excel) oder Textliste öffnen.',
+    importExport: 'Import & Export', importWhere: 'In welches Team?', importNewTeam: n => 'Neues Team „' + n + '“',
+    playersImported: (n, t) => n + ' Spieler zu „' + t + '“ hinzugefügt.', openFile: '📄 Datei öffnen',
     teamName: 'Teamname', players: 'Spieler', nrPh: 'Nr.', namePh: 'Name', pasteList: 'Liste einfügen',
     noPlayers: 'Noch keine Spieler. Tipp: Kopiere die Namensliste z. B. aus DFBnet, WhatsApp oder dem Kaderplaner und nutze „Liste einfügen“.',
     edit: 'Bearbeiten', delTeam: 'Team löschen', delTeamQ: 'Team löschen?',
     delTeamText: n => n + ' und der Kader werden gelöscht. Bereits gespielte Spiele bleiben erhalten.',
-    exportTB: '📤 Kader für TacticBoard', exported: 'Kader exportiert.',
+    exportTB: '📤 Kader exportieren', exported: 'Kader exportiert.',
     pasteTitle: 'Liste einfügen', pasteSub: 'Eine Zeile pro Spieler. Erkannt werden z. B. „10 Max Mustermann“, „Mustermann, Max“, „Max (TW)“, kopierte Tabellen und der Spieltag aus dem Kaderplaner.',
     fromClipboard: '📋 Aus Zwischenablage', takeN: n => n + ' Spieler übernehmen', noneFound: 'Keine neuen Spieler erkannt',
     editPlayer: 'Spieler bearbeiten', keeperDefault: 'Torwart', removePlayer: 'Spieler entfernen',
@@ -348,7 +419,7 @@ const I18N = {
         'Alle Daten bleiben auf deinem Handy. Es gibt kein Konto und keine Internetverbindung.'
       ]],
       ['So geht’s', [
-        '<b>1. Mannschaft anlegen</b> – unter „Teams & Kader“. Spieler einzeln eintragen, eine Namensliste einfügen oder den Kader aus TacticBoard übernehmen. Trainierst du mehrere Mannschaften, legst du jede als „Mein Team“ an und wählst sie oben auf der Startseite aus.',
+        '<b>1. Mannschaft anlegen</b> – unter „Teams & Kader“. Spieler einzeln eintragen, eine Namensliste einfügen oder eine Kader-Datei bzw. CSV-Tabelle importieren. Trainierst du mehrere Mannschaften, legst du jede als „Mein Team“ an und wählst sie oben auf der Startseite aus.',
         '<b>2. Spiel anlegen</b> – Gegner, Heim/Auswärts und Spielformat wählen, dann für jeden Spieler Fehlt, Bank oder Start. Mit „Spieltag einfügen“ übernimmt PitchPro das alles aus dem geteilten Spieltag des Kaderplaners.',
         '<b>3. Während des Spiels</b> – „Anpfiff“ startet die Uhr. Tippe auf einen Spieler für Tor, Elfmeter, Eigentor, Karte oder Wechsel. Für Tore des Gegners reicht ein Tipp auf den Vereinsnamen.',
         '<b>4. Nach dem Abpfiff</b> – der Spielbericht lässt sich teilen, z. B. in die Eltern-Gruppe. Unter „Statistik“ siehst du Tore, Einsätze und Spielzeiten über die ganze Saison.'
@@ -356,6 +427,8 @@ const I18N = {
       ['Wechsel & faire Spielzeit', [
         'Stelle beim Anlegen eine <b>Erinnerung alle X Minuten</b> ein. Ist ein Wechsel fällig, vibriert das Handy und gibt einen Signalton. Ist das Display aus oder bist du in einer anderen App, kommt eine Benachrichtigung (beim ersten Anpfiff fragt das Handy einmal nach der Erlaubnis).',
         'Mit <b>„Faire Spielzeit“</b> zeigt jede Spielerkachel die bisherigen Minuten, und PitchPro schlägt vor, wer raus und wer rein sollte. Ein Tipp auf „Wechseln“ führt den Vorschlag aus. Der Torwart wird dabei nicht getauscht.',
+        '<b>Wechselplan:</b> Mit Erinnerung kannst du beim Anlegen „📋 Wechselplan erstellen“ – PitchPro schlägt eine faire Rotation vor, die du pro Wechsel ändern kannst. Ist ein Wechsel fällig, steht da z. B. „Ben und Mia für Finn und Emma“, ein Tipp führt ihn aus.',
+        '<b>Block-Wechsel:</b> Bei „Bank“ auf „⇄ Block-Wechsel“ tippen, um mehrere Spieler auf einmal zu wechseln.',
         'Solange die Uhr läuft, bleibt der Bildschirm an.'
       ]],
       ['Gut zu wissen', [
@@ -368,10 +441,16 @@ const I18N = {
         '<b>Spieler kommt später?</b> Bei „Bank“ auf „＋ Spieler“ tippen. Ist auf dem Platz noch Platz frei, kommt er mit „Aufs Feld“ ohne Wechsel dazu.',
         '<b>Eigentor:</b> Beim eigenen Spieler zählt es für den Gegner, beim Gegner für dich.',
         '<b>Zurück-Taste:</b> schließt Fenster und geht zurück, beendet die App aber nie – damit am Spielfeldrand nichts verloren geht. Die Uhr läuft auch weiter, wenn du kurz in eine andere App wechselst.',
+        '<b>Schnell notieren:</b> „⚽ Tor“ unter der Uhr – Torschütze wählen oder später eintragen. „↶ Rückgängig“ nimmt den letzten Eintrag zurück.',
+        '<b>Feldansicht:</b> Bei „Auf dem Platz“ zwischen Kacheln und Spielfeld umschalten. Rollen aus TacticBoard (Abwehr, Mittelfeld, Sturm) bestimmen die Reihen.',
+        '<b>Spiel vergessen?</b> „✎ Spiel nachtragen“ auf der Startseite: Aufstellung wählen, dann Tore, Karten und Wechsel mit Minute eintragen. Auch abgeschlossene Spiele lassen sich im Bericht über „✎ Spiel bearbeiten“ ergänzen.',
+        '<b>Spielerprofil & Direktvergleich:</b> In der Statistik einen Spieler antippen, um alle seine Spiele zu sehen. Unten steht die Bilanz gegen jeden Gegner.',
+        '<b>Als Bild teilen:</b> Im Spielbericht erzeugt „🖼 Als Bild teilen“ eine Ergebnis-Grafik für WhatsApp & Co.',
+        '<b>Pralle Sonne?</b> Oben im Live-Spiel auf ☀︎ tippen (oder unter ⚙︎) – der helle Modus ist draußen besser lesbar.',
         '<b>Neues Handy?</b> Unter ⚙︎ eine Sicherung exportieren und auf dem neuen Gerät importieren.'
       ]],
       ['Zusammen mit TacticBoard', [
-        'In TacticBoard stellst du die Mannschaft auf, in PitchPro protokollierst du das Spiel. Kader wandern als Datei in beide Richtungen (👥 Kader → „📤 Kader exportieren“ bzw. „📥 Kader aus TacticBoard“). Rückennummern, Torwart und wer dabei ist, werden übernommen.'
+        'In TacticBoard stellst du die Mannschaft auf, in PitchPro protokollierst du das Spiel. Kader wandern als Datei in beide Richtungen („📤 Kader exportieren“ und „📥 Kader importieren“), und mit „📲 Aufstellung an PitchPro“ kommt die Aufstellung vom Taktikbrett direkt ins Spiel. Rückennummern, Torwart und wer dabei ist, werden übernommen.'
       ]],
       ['Datenschutz', [
         'Namen von Spielerinnen und Spielern bleiben auf deinem Gerät. Bei Kindern genügen auch Vornamen oder Rückennummern. Geteilte Berichte und Statistiken enthalten die eingetragenen Namen.'
@@ -392,6 +471,32 @@ const I18N = {
     backupNever: n => n + ' Spiele sind nur auf diesem Handy gespeichert. Eine Sicherung schützt sie bei Verlust oder Handywechsel.',
     backupAgo: (d, n) => 'Letzte Sicherung vor ' + d + ' Tagen, seitdem ' + n + ' neue Spiele.',
     notifyText: 'Zeit für einen Wechsel.', notifyChannel: 'Wechselerinnerung',
+    undo: '↶ Rückgängig', undone: x => 'Zurückgenommen: ' + x, quickGoal: n => '⚽ Tor ' + n, quickGoalQ: 'Wer hat getroffen?',
+    scorerLater: 'Torschütze später eintragen', scorerLaterHint: 'Im Verlauf antippen und Spieler wählen',
+    blockSub: '⇄ Block-Wechsel', blockHint: 'Mehrere Spieler auf einmal wechseln.', blockOut: 'Raus', blockIn: 'Rein',
+    blockNeed: 'Gleich viele raus und rein wählen', blockGo: n => n + ' Wechsel ausführen', blockDone: n => n + ' Wechsel notiert.',
+    viewField: '⚽ Feld', viewTiles: '▦ Kacheln',
+    planCreate: '📋 Wechselplan erstellen', planHint: 'Optional: Wechsel vorab festlegen. Die Erinnerung sagt dann, wer kommt und wer geht.',
+    planTitle: 'Wechselplan', planNone: 'kein Wechsel', planRedo: 'Neu vorschlagen', planClear: 'Plan löschen',
+    planStep: m => 'Wechsel in Minute ' + m, planStepHint: 'Reihenfolge des Antippens = wer für wen', planDoneBtn: 'Fertig',
+    planNow: 'Jetzt laut Plan:', planDo: 'Plan ausführen', planSkip: 'Überspringen', planNext: m => 'Geplant (' + m + "')", and: 'und',
+    pastMatch: '✎ Spiel nachtragen', pastTitle: 'Spiel nachtragen', pastDate: 'Datum', pastCreate: 'Anlegen & Ereignisse eintragen',
+    editTitle: 'Spiel bearbeiten', editMatch: '✎ Spiel bearbeiten',
+    editHint: 'Spieler oder Gegner antippen, um Tore, Karten und Wechsel nachzutragen – danach die Minute eintragen.',
+    editHintManual: 'Ohne Wechsel zählen alle aus der Startelf als durchgespielt.',
+    minutePh: 'Minute', setMinute: 'Übernehmen',
+    h2hTitle: 'Direktvergleich', h2hLine: (n, wdl, gf, ga) => 'Bisher: ' + n + (n === 1 ? ' Spiel' : ' Spiele') + ' · ' + wdl + ' · ' + gf + ':' + ga,
+    started: 'Startelf', subbedIn: 'eingewechselt', notUsed: 'nicht eingesetzt', inSquad: 'im Kader',
+    kpiApps: 'Einsätze', kpiMin: 'Minuten', kpiAvg: 'Ø Minuten', kpiGoals: 'Tore', kpiAssists: 'Vorlagen', kpiShare: 'Spielzeit',
+    resW: 'S', resD: 'U', resL: 'N', profileHint: 'Antippen öffnet den Spielbericht.', playerTap: 'Spieler antippen für alle Spiele',
+    shareImage: '🖼 Als Bild teilen', imgNoGoals: 'Keine Tore', imgFooter: 'PitchPro', imgCards: 'Karten',
+    onbSkip: 'Überspringen', onbNext: 'Weiter', onbGo: "Los geht's", onbAgain: 'Einführung noch einmal zeigen',
+    onbSteps: [
+      ['👥', 'Team & Kader anlegen', 'Lege deine Mannschaft an und trage die Spieler ein – einzeln, als eingefügte Liste oder per Datei-Import (z. B. CSV-Tabelle).'],
+      ['📋', 'Spiel vorbereiten', 'Gegner, Spielformat und Aufstellung wählen. Auf Wunsch erinnert dich PitchPro an Wechsel – für faire Spielzeit oder nach festem Wechselplan.'],
+      ['⚽', 'Live notieren', 'Spieler antippen für Tor, Karte oder Wechsel – die Uhr läuft mit. Danach den Spielbericht teilen und die Statistik der Saison ansehen.']
+    ],
+    appearance: 'Darstellung', themeDark: 'Dunkel', themeLight: 'Hell (für Sonne)', themeToggle: 'Hell/Dunkel umschalten',
     ftShort: 'n. Abpf.', pauseShort: 'Pause',
     evKeeper: n => 'Torwart: ' + n, evIn: n => 'Eingewechselt: ' + n, breakShort: 'HZ',
     addToField: 'Aufs Feld (ohne Wechsel)', addToFieldHint: 'Es ist noch ein Platz frei',
@@ -418,7 +523,7 @@ const I18N = {
     heroText: 'Goals, cards and substitutions with one tap – including playing time and substitution reminders.',
     firstTeam: 'Create my team first', newMatch: 'New match', teamsBtn: 'Teams & squads',
     pasteMatchday: '📋 Paste matchday',
-    pasteMatchdayHint: 'Paste a shared matchday from the squad planner or a lineup from TacticBoard – the match is set up right away.',
+    pasteMatchdayHint: 'Paste a shared matchday or a shared lineup – the match is set up right away.',
     liveMatches: 'Live matches', pastMatches: 'Past matches', noPast: 'No finished matches yet.',
     running: 'live', longPressDelete: 'Long press to delete',
     delMatchQ: 'Delete match?', delMatchText: (a, b) => a + ' – ' + b + ' will be deleted permanently.',
@@ -432,12 +537,14 @@ const I18N = {
     noOwnTeam: 'Create your own team to start matches.',
     noOpps: 'Optional. Without an opponent squad you simply tap the club name during the match.',
     nPlayers: n => n + ' players',
-    importTB: '📥 Squad from TacticBoard', importTBHint: 'In TacticBoard go to 👥 Squad → “📤 Export squads”, save the file and open it here.',
+    importSquad: '📥 Import squad', importSquadHint: 'Open a squad file, a CSV table (e.g. from Excel) or a text list.',
+    importExport: 'Import & export', importWhere: 'Into which team?', importNewTeam: n => 'New team “' + n + '”',
+    playersImported: (n, t) => n + ' players added to “' + t + '”.', openFile: '📄 Open file',
     teamName: 'Team name', players: 'Players', nrPh: 'No.', namePh: 'Name', pasteList: 'Paste list',
     noPlayers: 'No players yet. Tip: copy a name list (e.g. from WhatsApp or the squad planner) and use “Paste list”.',
     edit: 'Edit', delTeam: 'Delete team', delTeamQ: 'Delete team?',
     delTeamText: n => n + ' and its squad will be deleted. Past matches are kept.',
-    exportTB: '📤 Squad for TacticBoard', exported: 'Squad exported.',
+    exportTB: '📤 Export squad', exported: 'Squad exported.',
     pasteTitle: 'Paste list', pasteSub: 'One player per line, e.g. “10 Max Smith”, “Smith, Max”, “Max (GK)”, copied tables or a shared matchday.',
     fromClipboard: '📋 From clipboard', takeN: n => 'Add ' + n + ' players', noneFound: 'No new players found',
     editPlayer: 'Edit player', keeperDefault: 'Goalkeeper', removePlayer: 'Remove player',
@@ -494,7 +601,7 @@ const I18N = {
         'All data stays on your phone. No account, no internet connection.'
       ]],
       ['How it works', [
-        '<b>1. Create your team</b> – under “Teams & squads”. Add players one by one, paste a name list or import the squad from TacticBoard. If you coach several teams, add each as “My team” and pick it at the top of the start screen.',
+        '<b>1. Create your team</b> – under “Teams & squads”. Add players one by one, paste a name list or import a squad file or CSV table. If you coach several teams, add each as “My team” and pick it at the top of the start screen.',
         '<b>2. Set up a match</b> – choose opponent, home/away and format, then mark each player as Out, Bench or Start. “Paste matchday” takes all of this from a shared matchday of the squad planner.',
         '<b>3. During the match</b> – “Kick-off” starts the clock. Tap a player for goal, penalty, own goal, card or substitution. For opponent goals one tap on the club name is enough.',
         '<b>4. After full time</b> – share the match report, e.g. with the parents’ group. “Statistics” shows goals, appearances and playing time for the whole season.'
@@ -502,6 +609,8 @@ const I18N = {
       ['Substitutions & fair playing time', [
         'Set a <b>reminder every X minutes</b> when creating the match. When a substitution is due, the phone vibrates and beeps. If the screen is off or you are in another app, you get a notification (the phone asks for permission once at the first kick-off).',
         'With <b>“Fair playing time”</b> every player tile shows the minutes played and PitchPro suggests who should come off and on. Tap “Sub” to apply the suggestion. The goalkeeper is never swapped automatically.',
+        '<b>Substitution plan:</b> With a reminder set you can “📋 Create substitution plan” – PitchPro suggests a fair rotation which you can change per substitution. When one is due you see e.g. “Ben and Mia for Finn and Emma”; one tap applies it.',
+        '<b>Block sub:</b> Tap “⇄ Block sub” next to the bench to substitute several players at once.',
         'The screen stays on while the clock is running.'
       ]],
       ['Good to know', [
@@ -514,10 +623,16 @@ const I18N = {
         '<b>Player arrives late?</b> Tap “＋ Player” next to the bench. If there is a free spot on the pitch, “Onto the pitch” brings them on without a substitution.',
         '<b>Own goal:</b> by your player it counts for the opponent, by the opponent it counts for you.',
         '<b>Back button:</b> closes dialogs and goes back, but never closes the app – so nothing gets lost on the touchline. The clock keeps running if you briefly switch to another app.',
+        '<b>Quick logging:</b> “⚽ Goal” below the clock – pick the scorer or add them later. “↶ Undo” removes the last entry.',
+        '<b>Pitch view:</b> Switch between tiles and a pitch next to “On the pitch”. Roles from TacticBoard (defence, midfield, attack) decide the rows.',
+        '<b>Forgot a match?</b> “✎ Add past match” on the home screen: pick the line-up, then add goals, cards and substitutions with their minute. Finished matches can also be completed via “✎ Edit match” in the report.',
+        '<b>Player profile & head-to-head:</b> Tap a player in the statistics to see all their matches. At the bottom you find the record against each opponent.',
+        '<b>Share as image:</b> “🖼 Share as image” in the match report creates a result graphic for WhatsApp & co.',
+        '<b>Bright sun?</b> Tap ☀︎ at the top of the live screen (or under ⚙︎) – light mode is easier to read outdoors.',
         '<b>New phone?</b> Export a backup under ⚙︎ and import it on the new device.'
       ]],
       ['Together with TacticBoard', [
-        'Line up your team in TacticBoard, log the match in PitchPro. Squads move as a file in both directions (👥 Squad → “📤 Export squads” or “📥 Squad from TacticBoard”). Shirt numbers, goalkeeper and who is in the squad are kept.'
+        'Line up your team in TacticBoard, log the match in PitchPro. Squads move as a file in both directions (“📤 Export squad” and “📥 Import squad”), and “📲 Lineup to PitchPro” brings the line-up from the board straight into the match. Shirt numbers, goalkeeper and who is in the squad are kept.'
       ]],
       ['Privacy', [
         'Player names stay on your device. For children, first names or shirt numbers are enough. Shared reports and statistics contain the names you entered.'
@@ -538,6 +653,32 @@ const I18N = {
     backupNever: n => n + ' matches are stored only on this phone. A backup protects them if you lose or change your phone.',
     backupAgo: (d, n) => 'Last backup ' + d + ' days ago, ' + n + ' new matches since.',
     notifyText: 'time for a substitution.', notifyChannel: 'Substitution reminder',
+    undo: '↶ Undo', undone: x => 'Undone: ' + x, quickGoal: n => '⚽ Goal ' + n, quickGoalQ: 'Who scored?',
+    scorerLater: 'Add scorer later', scorerLaterHint: 'Tap it in the timeline and pick the player',
+    blockSub: '⇄ Block sub', blockHint: 'Substitute several players at once.', blockOut: 'Off', blockIn: 'On',
+    blockNeed: 'Pick the same number off and on', blockGo: n => 'Make ' + n + ' substitutions', blockDone: n => n + ' substitutions logged.',
+    viewField: '⚽ Pitch', viewTiles: '▦ Tiles',
+    planCreate: '📋 Create substitution plan', planHint: 'Optional: plan substitutions in advance. The reminder then tells you who comes on and who goes off.',
+    planTitle: 'Substitution plan', planNone: 'no substitution', planRedo: 'Suggest again', planClear: 'Delete plan',
+    planStep: m => 'Substitution in minute ' + m, planStepHint: 'Tap order = who replaces whom', planDoneBtn: 'Done',
+    planNow: 'Now, as planned:', planDo: 'Apply plan', planSkip: 'Skip', planNext: m => 'Planned (' + m + "')", and: 'and',
+    pastMatch: '✎ Add past match', pastTitle: 'Add past match', pastDate: 'Date', pastCreate: 'Create & add events',
+    editTitle: 'Edit match', editMatch: '✎ Edit match',
+    editHint: 'Tap a player or the opponent to add goals, cards and substitutions – then enter the minute.',
+    editHintManual: 'Without substitutions the starting line-up counts as having played the full match.',
+    minutePh: 'Minute', setMinute: 'Apply',
+    h2hTitle: 'Head-to-head', h2hLine: (n, wdl, gf, ga) => 'So far: ' + n + (n === 1 ? ' match' : ' matches') + ' · ' + wdl + ' · ' + gf + ':' + ga,
+    started: 'started', subbedIn: 'came on', notUsed: 'not used', inSquad: 'in squad',
+    kpiApps: 'Appearances', kpiMin: 'Minutes', kpiAvg: 'Avg minutes', kpiGoals: 'Goals', kpiAssists: 'Assists', kpiShare: 'Playing time',
+    resW: 'W', resD: 'D', resL: 'L', profileHint: 'Tap to open the match report.', playerTap: 'Tap a player to see all matches',
+    shareImage: '🖼 Share as image', imgNoGoals: 'No goals', imgFooter: 'PitchPro', imgCards: 'Cards',
+    onbSkip: 'Skip', onbNext: 'Next', onbGo: "Let's go", onbAgain: 'Show the introduction again',
+    onbSteps: [
+      ['👥', 'Create team & squad', 'Create your team and add the players – one by one, as a pasted list or by importing a file (e.g. a CSV table).'],
+      ['📋', 'Prepare the match', 'Choose opponent, format and line-up. If you like, PitchPro reminds you of substitutions – for fair playing time or following a fixed plan.'],
+      ['⚽', 'Log it live', 'Tap a player for a goal, card or substitution – the clock runs along. Afterwards share the match report and check the season statistics.']
+    ],
+    appearance: 'Appearance', themeDark: 'Dark', themeLight: 'Light (for sunshine)', themeToggle: 'Toggle light/dark',
     ftShort: 'FT', pauseShort: 'Break',
     evKeeper: n => 'Goalkeeper: ' + n, evIn: n => 'On: ' + n, breakShort: 'HT',
     addToField: 'Onto the pitch (no sub)', addToFieldHint: 'There is still a free spot',
@@ -565,6 +706,15 @@ let LANG = (function(){
 })();
 const T = () => I18N[LANG];
 document.documentElement.lang = LANG;
+/* Darstellung: dunkel (Standard) oder hell */
+let THEME = (function(){ try { return localStorage.getItem('pp_theme') === 'light' ? 'light' : 'dark'; } catch(e){ return 'dark'; } })();
+let FIELD_VIEW = (function(){ try { return localStorage.getItem('pp_field') === '1'; } catch(e){ return false; } })();
+function applyTheme(){
+  document.documentElement.setAttribute('data-theme', THEME);
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if(meta) meta.setAttribute('content', THEME === 'light' ? '#0b3d1f' : '#111111');
+}
+applyTheme();
 
 /* ---------------------------------------------------------------------
    HELFER
@@ -654,7 +804,22 @@ function cleanMatch(m){
       return { status, period: num(c.period, 1, 12, 1), periodElapsedMs: num(c.periodElapsedMs, 0, 1e8, 0),
                completedMs: num(c.completedMs, 0, 1e9, 0), runningSince: status === 'running' ? since : null };
     })(),
-    events: evs, reminderAckMs: num(m.reminderAckMs, 0, 1e9, 0)
+    events: evs, reminderAckMs: num(m.reminderAckMs, 0, 1e9, 0),
+    manual: m.manual === true,
+    plan: (() => {
+      if(!Array.isArray(m.plan)) return null;
+      const out = m.plan.slice(0, 30).map(x => {
+        if(!x || typeof x !== 'object') return null;
+        const outs = [], ins = [];
+        const o = Array.isArray(x.outs) ? x.outs : [], n = Array.isArray(x.ins) ? x.ins : [];
+        for(let i = 0; i < Math.min(o.length, n.length, 11); i++){
+          const a = pid(o[i]), b = pid(n[i]);
+          if(a && b && a !== b){ outs.push(a); ins.push(b); }
+        }
+        return outs.length ? { min: num(x.min, 0, 999, 0), outs, ins, st: ['open', 'done', 'skip'].indexOf(x.st) !== -1 ? x.st : 'open' } : null;
+      }).filter(Boolean);
+      return out.length ? out : null;
+    })()
   };
 }
 function load(){
@@ -874,6 +1039,126 @@ function fairShare(m){
   const n = Math.max(1, m.ownPlayers.length - k);
   return Math.min(total, slots * total / n);
 }
+/* ---------------------------------------------------------------------
+   WECHSELPLAN
+   Schritt i ist bei Minute (i+1) x Intervall vorgesehen. outs[j] geht fuer
+   ins[j] - die Reihenfolge des Antippens bestimmt also, wer fuer wen kommt.
+--------------------------------------------------------------------- */
+function planSlots(s){
+  const iv = s.subIntervalMinutes, total = s.periods * s.periodMinutes, out = [];
+  if(!iv) return out;
+  for(let x = iv; x < total && out.length < 30; x += iv) out.push(x);
+  return out;
+}
+const pairsOf = st => st ? st.outs.slice(0, Math.min(st.outs.length, st.ins.length)).map((o, i) => [o, st.ins[i]]) : [];
+/* Wer steht vor Schritt k auf dem Platz? */
+function planField(starters, plan, k){
+  const f = new Set(starters);
+  for(let i = 0; i < k && i < plan.length; i++) pairsOf(plan[i]).forEach(([o, n]) => { if(f.has(o) && !f.has(n)){ f.delete(o); f.add(n); } });
+  return f;
+}
+/* Plan an Aufstellung und Format anpassen (Spieler fehlt jetzt, Intervall geaendert ...) */
+function fixPlan(d, present, starters){
+  if(!d.plan) return;
+  const slots = planSlots(d.settings);
+  if(!slots.length){ d.plan = null; return; }
+  const plan = d.plan.slice(0, slots.length);
+  while(plan.length < slots.length) plan.push({ outs: [], ins: [] });
+  const ok = new Set(present);
+  for(let i = 0; i < plan.length; i++){
+    const f = planField(starters, plan, i), x = plan[i];
+    x.outs = x.outs.filter(id => ok.has(id) && f.has(id));
+    x.ins = x.ins.filter(id => ok.has(id) && !f.has(id));
+  }
+  d.plan = plan;
+}
+/* Vorschlag: zu jedem Termin die Feldspieler mit den meisten Minuten gegen
+   die Bankspieler mit den wenigsten tauschen (Torwart bleibt drin). */
+function autoPlan(settings, present, starters, keeperId){
+  const slots = planSlots(settings), iv = settings.subIntervalMinutes;
+  const pl = {}; present.forEach(id => { pl[id] = 0; });
+  const f = new Set(starters);
+  let last = 0;
+  return slots.map(x => {
+    f.forEach(id => { pl[id] = (pl[id] || 0) + x - last; }); last = x;
+    const field = [...f].filter(id => id !== keeperId).sort((a, b) => pl[b] - pl[a]);
+    const bench = present.filter(id => !f.has(id) && id !== keeperId).sort((a, b) => pl[a] - pl[b]);
+    const st = { outs: [], ins: [] };
+    for(let i = 0; i < Math.min(field.length, bench.length); i++){
+      if(pl[field[i]] - pl[bench[i]] < iv) break;
+      st.outs.push(field[i]); st.ins.push(bench[i]);
+    }
+    pairsOf(st).forEach(([o, n]) => { f.delete(o); f.add(n); });
+    return st;
+  });
+}
+/* Naechster offener Planschritt mit Wechseln, die jetzt moeglich sind */
+function nextPlanStep(m, st){
+  if(!m.plan) return null;
+  for(let i = 0; i < m.plan.length; i++){
+    const x = m.plan[i];
+    if(x.st !== 'open') continue;
+    const pairs = pairsOf(x).filter(([o, n]) => st.onField.indexOf(o) !== -1 && st.bench.indexOf(n) !== -1);
+    if(pairs.length) return { idx: i, min: x.min, pairs };
+  }
+  return null;
+}
+function andList(a){ return a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' ' + T().and + ' ' + a[a.length - 1]; }
+
+/* Feldansicht: Torwart unten, die anderen in Reihen (Rollen aus TacticBoard,
+   sonst nach Rueckennummer auf eine uebliche Grundordnung verteilt) */
+const AUTO_ROWS = { 1: [1], 2: [2], 3: [2, 1], 4: [2, 2], 5: [2, 2, 1], 6: [2, 3, 1], 7: [3, 3, 1], 8: [3, 3, 2], 9: [4, 3, 2], 10: [4, 4, 2], 11: [4, 4, 3] };
+function fieldLayout(m, st){
+  const team = teamById(m.ownTeamId);
+  const roleOf = id => { const p = team && team.players.find(x => x.id === id); return p && p.tb ? p.tb.role : ''; };
+  const kid = st.onField.indexOf(st.keeperId) !== -1 ? st.keeperId : null;
+  const out = st.onField.filter(id => id !== kid);
+  const roles = out.map(roleOf);
+  let rows;
+  if(out.length && roles.every(r => r === 'def' || r === 'mid' || r === 'att')){
+    rows = ['def', 'mid', 'att'].map(r => out.filter((id, i) => roles[i] === r)).filter(r => r.length);
+  } else {
+    const shape = AUTO_ROWS[out.length] || [out.length];
+    let i = 0; rows = shape.map(n => out.slice(i, i += n)).filter(r => r.length);
+  }
+  const pos = [];
+  if(kid) pos.push({ id: kid, x: 50, y: 89 });
+  const n = rows.length;
+  rows.forEach((row, ri) => {
+    const y = n === 1 ? 45 : 68 - ri * ((n === 2 ? 36 : 54) / (n - 1));
+    row.forEach((id, ci) => pos.push({ id, x: (ci + 1) * 100 / (row.length + 1), y }));
+  });
+  return pos;
+}
+
+/* Kopf-an-Kopf-Bilanz gegen jeden Gegner (nach Vereinsname) */
+function h2h(teamId, range){
+  const [from, to] = rangeBounds(range);
+  const map = {};
+  DB.matches.filter(m => m.ownTeamId === teamId && m.clock.status === 'finished' && matchDate(m) >= from && matchDate(m) < to)
+    .sort((a, b) => matchDate(b) - matchDate(a)).forEach(m => {
+      const k = m.oppName.trim().toLowerCase();
+      const r = map[k] || (map[k] = { key: k, name: m.oppName, n: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, matches: [] });
+      const st = derive(m, m.clock.completedMs), res = matchResult(m, st.score);
+      r.n++; r.gf += st.score.own; r.ga += st.score.opp;
+      if(res > 0) r.w++; else if(res === 0) r.d++; else r.l++;
+      r.matches.push(m);
+    });
+  return Object.keys(map).map(k => map[k]).sort((a, b) => b.n - a.n || a.name.localeCompare(b.name));
+}
+const isoDay = ts => { const d = new Date(ts); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+const dayTs = v => { const x = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || ''); return x ? new Date(+x[1], +x[2] - 1, +x[3], 12).getTime() : Date.now(); };
+
+/* Beginn eines Abschnitts in Spielzeit: aus einem Ereignis dieses Abschnitts
+   (beruecksichtigt echte Nachspielzeit), sonst aus der Uhr, sonst nominell */
+function periodStartMs(m, p){
+  const e = m.events.find(x => x.period === p);
+  if(e) return Math.max(0, e.gameMs - e.periodMs);
+  const c = m.clock;
+  if(c.period === p) return Math.max(0, c.completedMs - (c.status === 'break' || c.status === 'finished' ? c.periodElapsedMs : 0));
+  return periodStartMin(m, p) * 60000;
+}
+
 function msUntilReminder(m, now){
   const iv = m.settings.subIntervalMinutes * 60000;
   if(!iv || m.clock.status === 'pre' || m.clock.status === 'finished') return null;
@@ -1142,6 +1427,86 @@ function parseRoster(text){
 }
 
 /* ---------------------------------------------------------------------
+   CSV-TABELLEN (Excel, Vereinslisten ...)
+   Trennzeichen ; , oder Tab werden erkannt, Anfuehrungszeichen beachtet.
+   Mit Kopfzeile ("Nr", "Name" bzw. "Vorname"/"Nachname", "TW"/"Position")
+   werden die Spalten zugeordnet; ohne Kopfzeile wird jede Zeile wie eine
+   eingefuegte Namensliste gelesen.
+--------------------------------------------------------------------- */
+function parseTable(text){
+  const lines = String(text || '').replace(/^\uFEFF/, '').replace(/\r/g, '').split('\n').filter(l => l.trim());
+  if(!lines.length) return null;
+  const head = lines.slice(0, 5);
+  const count = (l, d) => l.split(d).length - 1;
+  const delim = [';', '\t', ','].map(d => [d, head.reduce((n, l) => n + (count(l, d) > 0 ? 1 : 0), 0)])
+    .sort((a, b) => b[1] - a[1])[0];
+  if(!delim || delim[1] < Math.min(2, head.length)) return null;          // keine Tabelle
+  const d = delim[0];
+  const split = l => {
+    const out = []; let cell = '', q = false;
+    for(let i = 0; i < l.length; i++){
+      const ch = l[i];
+      if(q){ if(ch === '"'){ if(l[i + 1] === '"'){ cell += '"'; i++; } else q = false; } else cell += ch; }
+      else if(ch === '"') q = true;
+      else if(ch === d){ out.push(cell.trim()); cell = ''; }
+      else cell += ch;
+    }
+    out.push(cell.trim());
+    return out;
+  };
+  const rows = lines.map(split);
+  const H = {
+    nr: /^(nr\.?|no\.?|nummer|rückennummer|rueckennummer|trikot(nummer)?|#|number|shirt( number)?)$/i,
+    first: /^(vorname|first ?name|given ?name)$/i,
+    last: /^(nachname|familienname|last ?name|surname)$/i,
+    name: /^(name|spieler(in)?|spielername|player|name, ?vorname)$/i,
+    pos: /^(tw|torwart|torhüter|position|pos\.?|rolle|role|keeper|gk)$/i
+  };
+  let hi = -1, map = null;
+  for(let i = 0; i < Math.min(3, rows.length); i++){
+    const m = {};
+    rows[i].forEach((c, j) => { for(const k in H) if(m[k] == null && H[k].test(c)) m[k] = j; });
+    if(m.name != null || m.first != null || m.last != null){ hi = i; map = m; break; }
+  }
+  if(!map) return { lines: rows.map(r => r.join('\t')) };
+  const posHeader = map.pos != null ? rows[hi][map.pos] : '';
+  const flagCol = /^(tw|torwart|torhüter|keeper|gk)$/i.test(posHeader);   // Spalte "TW" mit x/ja
+  const players = [], seen = new Set();
+  rows.slice(hi + 1).forEach(r => {
+    const get = k => map[k] != null ? String(r[map[k]] || '').trim() : '';
+    let name;
+    if(get('first')) name = get('first') + ' ' + (get('last') || get('name'));
+    else name = get('name') || get('last');
+    name = name.replace(/\s+/g, ' ').trim();
+    const cm = name.match(/^([^,]+),\s*([^,]+)$/);
+    if(cm) name = cm[2] + ' ' + cm[1];
+    if(!name || name.length > 40 || seen.has(name.toLowerCase())) return;
+    seen.add(name.toLowerCase());
+    const n = parseInt(get('nr').replace(/\D/g, ''), 10);
+    const pv = get('pos');
+    const keeper = flagCol ? /^(x|ja|yes|1|✓|✔|tw)$/i.test(pv) : /^(tw|torwart|torhüter|torhueter|gk|goalkeeper|keeper)$/i.test(pv);
+    players.push({ name: name.slice(0, 40), number: isFinite(n) && n < 1000 ? n : null, keeper });
+  });
+  return { players };
+}
+/* Spieler aus einer Datei: Tabelle, sonst Namensliste */
+function parseFileRoster(text){
+  const tb = parseTable(text);
+  if(tb && tb.players) return tb.players;
+  return parseRoster(tb ? tb.lines.join('\n') : text);
+}
+/* Spieler in ein bestehendes Team uebernehmen (gleicher Name = aktualisieren) */
+function mergeIntoTeam(team, players){
+  let added = 0;
+  players.forEach(np => {
+    const p = team.players.find(x => x.name.toLowerCase() === np.name.toLowerCase());
+    if(p){ if(np.number != null) p.number = np.number; if(np.keeper) p.keeper = true; }
+    else if(team.players.length < 60){ team.players.push(cleanPlayer(Object.assign({}, np, { id: uid() }))); added++; }
+  });
+  return added;
+}
+
+/* ---------------------------------------------------------------------
    KADER-DATEI (Format von TacticBoard: { kind:'squads', squads:[...] })
 --------------------------------------------------------------------- */
 function teamsFromSquadFile(data){
@@ -1266,11 +1631,12 @@ $('file-in').addEventListener('change', () => {
   if(!f || !fileHandler) return;
   const r = new FileReader();
   r.onload = () => {
+    const text = String(r.result || '').replace(/^\uFEFF/, '');
     let data = null;
-    try { data = JSON.parse(String(r.result || '').replace(/^﻿/, '').trim()); } catch(e){ data = null; }
+    try { data = JSON.parse(text.trim()); } catch(e){ data = null; }
     const h = fileHandler; fileHandler = null;
-    h(data);
     $('file-in').value = '';
+    h(data, text, f.name || '');
   };
   r.readAsText(f);
 });
@@ -1298,14 +1664,23 @@ function patchEvent(matchId, eventId, fn){
   patchMatch(matchId, m => Object.assign({}, m, { events: m.events.map(e => e.id === eventId ? fn(Object.assign({}, e)) : e) }));
 }
 function addSub(id, side, outId, inId){
+  const eid = uid();
   patchMatch(id, m => {
     const st = Clock.stamp(m.clock, Date.now());
     return Object.assign({}, m, {
       reminderAckMs: side === 'own' ? st.gameMs : m.reminderAckMs,
-      events: m.events.concat([Object.assign({ id: uid(), type: 'sub', side, outId: outId || null, inId }, st)])
+      events: m.events.concat([Object.assign({ id: eid, type: 'sub', side, outId: outId || null, inId }, st)])
     });
   });
   vibrate(30);
+  return eid;
+}
+/* Nach dem Notieren: im laufenden Spiel Blatt zu; im abgeschlossenen Spiel
+   (nachtragen) gleich den Editor oeffnen, damit die Minute eingetragen wird */
+function afterEvent(eid){
+  const m = curMatch();
+  if(m && eid && m.clock.status === 'finished' && m.events.some(e => e.id === eid)){ refreshEventSheet(eid); return; }
+  closeSheet(); render(false);
 }
 
 /* ---------------------------------------------------------------------
@@ -1354,6 +1729,9 @@ function setTop(title, right, right2, brand){
   if(brand){
     tt.innerHTML = '<span class="brand"><img src="image.png" alt="" width="38" height="38" /><span>' + esc(title) + '</span></span>';
   } else tt.textContent = title;
+  // Sprachwahl per Flagge nur auf der Startseite
+  $('flags').hidden = !brand;
+  document.querySelectorAll('#flags .flag').forEach(f => f.classList.toggle('on', f.dataset.v === LANG));
   $('back').hidden = STACK.length <= 1;
   [['right', right], ['right2', right2]].forEach(([id, b]) => {
     const r = $(id);
@@ -1385,6 +1763,7 @@ function renderNow(resetScroll){
   else if(r.v === 'report') html = viewReport(r);
   else if(r.v === 'stats') html = viewStats(r);
   else if(r.v === 'about') html = viewAbout();
+  else if(r.v === 'player') html = viewPlayer(r);
   view.innerHTML = '<div class="wrap">' + html + '</div>';
   view.scrollTop = resetScroll ? 0 : keep;
   const board = view.querySelector('.board');
@@ -1429,7 +1808,8 @@ function viewHome(){
                 : '<button class="btn lg" data-act="goTeams">' + esc(t.firstTeam) + '</button>') +
     '<div class="row2" style="margin-top:8px"><button class="btn soft" data-act="pasteMatchday">' + esc(t.pasteMatchday) + '</button>' +
     '<button class="btn soft" data-act="goTeams">' + esc(t.teamsBtn) + '</button></div>' +
-    (act ? '<button class="btn soft" data-act="goStats" style="margin-top:8px">' + esc(t.statsBtn) + '</button>' : '') + '</div>';
+    (act ? '<div class="row2" style="margin-top:8px"><button class="btn soft" data-act="goStats">' + esc(t.statsBtn) + '</button>' +
+      '<button class="btn soft" data-act="pastMatch">' + esc(t.pastMatch) + '</button></div>' : '') + '</div>';
   const bk = backupDue();
   if(bk) h += '<div class="due" style="border-color:var(--line);background:var(--surface)"><h3 style="color:var(--text);font-size:17px">' + esc(t.backupDueTitle) + '</h3>' +
     '<div class="hint" style="margin:0 0 10px;font-size:14px">' + esc(bk.never ? t.backupNever(bk.n) : t.backupAgo(bk.days, bk.n)) + '</div>' +
@@ -1467,8 +1847,8 @@ function viewTeams(){
     '<button class="btn" data-act="createTeam">' + esc(t.create) + '</button></div>' +
     '<div class="sec"><h2>' + esc(t.myTeams) + '</h2></div>' + (own.length ? own.map(row).join('') : '<div class="empty">' + esc(t.noOwnTeam) + '</div>') +
     '<div class="sec"><h2>' + esc(t.savedOpps) + '</h2></div>' + (opp.length ? opp.map(row).join('') : '<div class="empty">' + esc(t.noOpps) + '</div>') +
-    '<div class="sec"><h2>TacticBoard</h2></div><button class="btn soft" data-act="importTB">' + esc(t.importTB) + '</button>' +
-    '<div class="hint">' + esc(t.importTBHint) + '</div>';
+    '<div class="sec"><h2>' + esc(t.importExport) + '</h2></div><button class="btn soft" data-act="importSquad">' + esc(t.importSquad) + '</button>' +
+    '<div class="hint">' + esc(t.importSquadHint) + '</div>';
 }
 
 function viewTeam(r){
@@ -1491,7 +1871,7 @@ function viewTeam(r){
     (team.isOwn ? '<button class="btn soft" data-act="goStats" data-id="' + team.id + '" style="margin-top:16px">' + esc(t.statsBtn) + '</button>' : '') +
     (team.isOwn && DB.teams.filter(x => x.isOwn).length > 1 && activeTeam() && activeTeam().id !== team.id
       ? '<button class="btn soft" data-act="pickTeamHome" data-id="' + team.id + '" style="margin-top:8px">' + esc(t.useTeam) + '</button>' : '') +
-    '<div class="sec"><h2>TacticBoard</h2></div><button class="btn soft" data-act="exportTB">' + esc(t.exportTB) + '</button>' +
+    '<div class="sec"><h2>' + esc(t.importExport) + '</h2></div><button class="btn soft" data-act="exportTB">' + esc(t.exportTB) + '</button>' +
     '<button class="btn ghost" data-act="delTeam" style="margin-top:28px">' + esc(t.delTeam) + '</button>';
 }
 
@@ -1523,9 +1903,57 @@ function stepper(key, label, val, min, max, suffix, zero){
     '<span class="val num">' + (val === 0 && zero ? esc(zero) : val + (suffix || '')) + '</span>' +
     '<button data-act="step" data-k="' + key + '" data-d="1" data-min="' + min + '" data-max="' + max + '">+</button></span></div>';
 }
+function h2hHint(team, name){
+  const k = String(name || '').trim().toLowerCase();
+  if(!team || !k) return '';
+  const r = h2h(team.id, 'all').find(x => x.key === k);
+  return r ? '<div class="hint" style="color:var(--text);font-weight:600">' + esc(T().h2hLine(r.n, T().wdl(r.w, r.d, r.l), r.gf, r.ga)) + '</div>' : '';
+}
+function planBlock(d, team, players){
+  const t = T(), s = d.settings;
+  if(!s.subIntervalMinutes || !team) return '';
+  const present = players.filter(p => role(d, p.id) !== 'absent').map(p => p.id);
+  const starters = players.filter(p => role(d, p.id) === 'start').map(p => p.id);
+  fixPlan(d, present, starters);
+  const nm = id => pShort(team.players.find(p => p.id === id));
+  if(!d.plan){
+    const can = starters.length > 0 && present.length > starters.length && planSlots(s).length > 0;
+    return '<button class="btn soft" data-act="planAuto" style="margin-top:10px"' + (can ? '' : ' disabled') + '>' + esc(t.planCreate) + '</button>' +
+      '<div class="hint" style="margin-bottom:6px">' + esc(t.planHint) + '</div>';
+  }
+  const slots = planSlots(s);
+  return '<div class="hint" style="margin:12px 2px 6px;font-weight:700">' + esc(t.planTitle) + '</div>' +
+    d.plan.map((x, i) => {
+      const pr = pairsOf(x);
+      return '<button class="list-row plan-row" data-act="planEdit" data-i="' + i + '"><span class="pnum num">' + slots[i] + "'</span>" +
+        '<span class="main"><div style="font-size:15px;font-weight:600;line-height:1.45' + (pr.length ? '' : ';color:var(--muted)') + '">' +
+        (pr.length ? pr.map(([o, n]) => '⬆ ' + esc(nm(n)) + ' ' + esc(t.forP) + ' ⬇ ' + esc(nm(o))).join('<br>') : esc(t.planNone)) +
+        '</div></span><span class="t2">✎</span></button>';
+    }).join('') +
+    '<div class="row2" style="margin-bottom:6px"><button class="btn soft" data-act="planAuto">' + esc(t.planRedo) + '</button>' +
+    '<button class="btn ghost" data-act="planClear">' + esc(t.planClear) + '</button></div>';
+}
+function openPlanStep(i){
+  const t = T(), d = cur(), team = teamById(d.ownId);
+  if(!team || !d.plan || !d.plan[i]) return;
+  const players = team.players.slice().sort(byNumber);
+  const present = players.filter(p => role(d, p.id) !== 'absent').map(p => p.id);
+  const starters = players.filter(p => role(d, p.id) === 'start').map(p => p.id);
+  const f = planField(starters, d.plan, i), x = d.plan[i];
+  const nm = id => pShort(team.players.find(p => p.id === id));
+  const chip = (id, k, arr) => { const j = arr.indexOf(id);
+    return '<button class="chip' + (j !== -1 ? ' on' : '') + '" data-act="planToggle" data-k="' + k + '" data-id="' + id + '">' + (j !== -1 ? (j + 1) + '. ' : '') + esc(nm(id)) + '</button>'; };
+  openSheet(t.planStep(planSlots(d.settings)[i]), t.planStepHint,
+    '<div class="hint" style="margin:0 2px 6px;font-weight:700">⬇ ' + esc(t.blockOut) + '</div><div class="chips">' +
+      present.filter(id => f.has(id)).map(id => chip(id, 'out', x.outs)).join('') + '</div>' +
+    '<div class="hint" style="margin:14px 2px 6px;font-weight:700">⬆ ' + esc(t.blockIn) + '</div><div class="chips">' +
+      present.filter(id => !f.has(id)).map(id => chip(id, 'in', x.ins)).join('') + '</div>' +
+    (x.outs.length !== x.ins.length ? '<div class="hint" style="color:var(--amber);font-weight:700">' + esc(t.blockNeed) + '</div>' : '') +
+    '<button class="btn" data-act="planDone" style="margin-top:16px">' + esc(t.planDoneBtn) + '</button>', { planIdx: i });
+}
 function viewNew(d){
   const t = T();
-  setTop(t.newTitle);
+  setTop(d.past ? t.pastTitle : t.newTitle);
   const own = DB.teams.filter(x => x.isOwn), opps = DB.teams.filter(x => !x.isOwn);
   const team = teamById(d.ownId);
   const players = team ? team.players.slice().sort(byNumber) : [];
@@ -1540,18 +1968,19 @@ function viewNew(d){
     '<input class="in" id="opp-name" placeholder="' + esc(t.oppPh) + '" value="' + esc(d.oppName) + '" />' +
     (opps.length ? '<div class="chips">' + opps.map(x => '<button class="chip opp' + (x.id === d.oppId ? ' on' : '') + '" data-act="pickOpp" data-id="' + x.id + '">' +
       esc(x.name) + ' (' + x.players.length + ')</button>').join('') + '</div>' : '') +
-    '<div class="hint">' + esc(d.oppId ? t.oppWithRoster : t.oppNoRoster) + '</div>' +
+    '<div class="hint">' + esc(d.oppId ? t.oppWithRoster : t.oppNoRoster) + '</div>' + h2hHint(team, d.oppName) +
     '<div class="chips"><button class="chip' + (d.isHome ? ' on' : '') + '" data-act="setHome" data-v="1">' + esc(t.home) + '</button>' +
     '<button class="chip' + (!d.isHome ? ' on' : '') + '" data-act="setHome" data-v="0">' + esc(t.away) + '</button></div></div>';
+  if(d.past) h += '<div class="sec"><h2>' + esc(t.pastDate) + '</h2></div><div class="card"><input class="in" type="date" id="past-date" value="' + esc(d.date || isoDay(Date.now())) + '" /></div>';
   h += '<div class="sec"><h2>' + esc(t.format) + '</h2></div><div class="card"><div class="chips">' +
     PRESETS.map((p, i) => '<button class="chip' + (s.periods === p[1] && s.periodMinutes === p[2] && s.playersOnField === p[3] ? ' on' : '') +
       '" data-act="preset" data-i="' + i + '">' + p[0] + '</button>').join('') + '</div><div style="margin-top:6px">' +
     stepper('periods', t.periods, s.periods, 1, 6) + stepper('periodMinutes', t.periodMin, s.periodMinutes, 5, 60, ' min') +
     stepper('playersOnField', t.onField, s.playersOnField, 2, 11) + '</div></div>';
-  h += '<div class="sec"><h2>' + esc(t.subsTime) + '</h2></div><div class="card">' +
-    stepper('subIntervalMinutes', t.remindEvery, s.subIntervalMinutes, 0, 45, ' min', t.off) +
+  h += '<div class="sec"><h2>' + esc(d.past ? t.assistsOpt : t.subsTime) + '</h2></div><div class="card">' + (d.past ? '' :
+    stepper('subIntervalMinutes', t.remindEvery, s.subIntervalMinutes, 0, 45, ' min', t.off) + planBlock(d, team, players) +
     '<button class="toggle" data-act="fair"><span style="flex:1"><div style="font-size:16px;font-weight:600">' + esc(t.fairPlay) + '</div>' +
-    '<div class="hint" style="margin:2px 0 0">' + esc(t.fairPlayHint) + '</div></span><span class="sw' + (s.fairPlay ? ' on' : '') + '"><i></i></span></button>' +
+    '<div class="hint" style="margin:2px 0 0">' + esc(t.fairPlayHint) + '</div></span><span class="sw' + (s.fairPlay ? ' on' : '') + '"><i></i></span></button>') +
     '<button class="toggle" data-act="assistsOpt"><span style="flex:1"><div style="font-size:16px;font-weight:600">' + esc(t.assistsOpt) + '</div>' +
     '<div class="hint" style="margin:2px 0 0">' + esc(t.assistsHint) + '</div></span><span class="sw' + (s.assists ? ' on' : '') + '"><i></i></span></button></div>';
   h += '<div class="sec"><h2>' + esc(t.lineup) + '</h2><span class="meta num"' + (starters.length > s.playersOnField ? ' style="color:var(--red)"' : '') + '>' +
@@ -1570,7 +1999,7 @@ function viewNew(d){
     }).join('');
   }
   const ok = !!team && d.oppName.trim() && starters.length > 0 && starters.length <= s.playersOnField;
-  h += '<button class="btn lg" data-act="startMatch" style="margin-top:22px"' + (ok ? '' : ' disabled') + '>' + esc(t.prepare) + '</button>';
+  h += '<button class="btn lg" data-act="startMatch" style="margin-top:22px"' + (ok ? '' : ' disabled') + '>' + esc(d.past ? t.pastCreate : t.prepare) + '</button>';
   if(!ok) h += '<div class="hint" style="text-align:center">' + esc(!d.oppName.trim() ? t.needOpp : !starters.length ? t.needStart : t.tooMany) + '</div>';
   return h;
 }
@@ -1580,7 +2009,7 @@ function viewLive(r){
   const t = T();
   const m = matchById(r.id);
   if(!m){ setTop(t.live); return '<div class="empty">–</div>'; }
-  setTop(t.live, { label: t.report, act: 'goReport' });
+  setTop(m.manual || r.edit ? t.editTitle : t.live, { label: t.report, act: 'goReport' }, { label: THEME === 'light' ? '☾' : '☀︎', act: 'theme', aria: t.themeToggle });
   const now = Date.now(), c = m.clock, s = m.settings;
   const st = derive(m, Clock.game(c, now));
   const home = m.isHome ? m.ownName : m.oppName, away = m.isHome ? m.oppName : m.ownName;
@@ -1600,10 +2029,13 @@ function viewLive(r){
     scoreText(m, st.score) + '</div><div class="tn">' + esc(away) + '</div></div>' +
     (so ? '<div class="status num" style="font-size:15px;color:#fff">' + esc(t.soShort) + ' ' + scoreText(m, so) + '</div>' : '') +
     '<button class="clock num" id="clock" data-act="clockFix">' + displayClock(m, now) + '</button>' +
-    '<div class="status" id="status"></div><div class="ctrls">' + ctr + '</div></div>';
+    '<div class="status" id="status"></div><div class="ctrls">' + ctr + '</div>' +
+    (c.status !== 'pre' ? '<div class="quick"><button class="qbtn" data-act="quickGoal">' + esc(t.quickGoal(m.ownName)) + '</button>' +
+      '<button class="qbtn" data-act="undo"' + (m.events.length ? '' : ' disabled') + '>' + esc(t.undo) + '</button></div>' : '') + '</div>';
 
+  if(c.status === 'finished') h += '<div class="next" style="margin-top:12px;color:var(--text)">' + esc(t.editHint) + (m.manual ? ' ' + esc(t.editHintManual) : '') + '</div>';
   if(c.status === 'finished' && st.score.own === st.score.opp && !m.shootout){
-    h += '<div class="row2" style="margin-top:16px">' + (!m.extra ? '<button class="btn soft" data-act="extraTime">' + esc(t.extraTime) + '</button>' : '') +
+    h += '<div class="row2" style="margin-top:16px">' + (!m.extra && !m.manual ? '<button class="btn soft" data-act="extraTime">' + esc(t.extraTime) + '</button>' : '') +
       '<button class="btn soft" data-act="shootoutStart">' + esc(t.shootout) + '</button></div>';
   }
   if(m.shootout) h += shootoutPanel(m);
@@ -1613,15 +2045,23 @@ function viewLive(r){
   const due = rem != null && rem <= 0 && (c.status === 'running' || c.status === 'paused');
   // Wechselvorschlaege nur, solange gespielt wird (auch in der Pause), nicht vor Anpfiff/nach Abpfiff
   const sugg = s.fairPlay && c.status !== 'pre' && c.status !== 'finished' ? suggestSubs(m, st) : [];
+  const ps = c.status !== 'pre' && c.status !== 'finished' ? nextPlanStep(m, st) : null;
+  const nmL = ids => andList(ids.map(id => pShort(findP(m, id))));
+  const planTxt = x => '⬆ ' + nmL(x.pairs.map(q => q[1])) + ' ' + t.forP + ' ⬇ ' + nmL(x.pairs.map(q => q[0]));
   r.due = due;
-  if(due){
+  if(due && ps){
+    h += '<div class="due"><h3>' + esc(t.subDue) + '</h3><div class="plan-now">' + esc(t.planNow) + '<br>' + esc(planTxt(ps)) + '</div>' +
+      '<div class="row2" style="margin-bottom:8px"><button class="btn" data-act="planDo" data-i="' + ps.idx + '">' + esc(t.planDo) + '</button>' +
+      '<button class="btn ghost" data-act="planSkip" data-i="' + ps.idx + '">' + esc(t.planSkip) + '</button></div>' +
+      '<button class="btn ghost" data-act="ackReminder">' + esc(t.later) + '</button></div>';
+  } else if(due){
     h += '<div class="due"><h3>' + esc(t.subDue) + '</h3>' + (sugg.length ? sugg.map(x => '<div class="sug"><span>⬆ ' + esc(pShort(findP(m, x.inId))) +
       ' ' + esc(t.forP) + ' ⬇ ' + esc(pShort(findP(m, x.outId))) + '</span><button class="btn" data-act="doSuggest" data-o="' + x.outId + '" data-i="' + x.inId + '">' +
       esc(t.doSub) + '</button></div>').join('') : '<div style="margin-bottom:8px">' + esc(t.tapToSub) + '</div>') +
       '<button class="btn ghost" data-act="ackReminder">' + esc(t.later) + '</button></div>';
   } else if(rem != null || (sugg.length && c.status !== 'pre')){
     h += '<div class="next">' + (rem != null ? esc(t.nextReminder) + ' <b class="num" id="countdown">' + fmtClock(Math.max(0, rem)) + '</b>' : '') +
-      (sugg.length ? '<div class="s">' + esc(t.suggestion) + ': ' + esc(pShort(findP(m, sugg[0].inId))) + ' ' + esc(t.forP) + ' ' + esc(pShort(findP(m, sugg[0].outId))) + '</div>' : '') + '</div>';
+      (ps ? '<div class="s">' + esc(t.planNext(ps.min)) + ': ' + esc(planTxt(ps)) + '</div>' : sugg.length ? '<div class="s">' + esc(t.suggestion) + ': ' + esc(pShort(findP(m, sugg[0].inId))) + ' ' + esc(t.forP) + ' ' + esc(pShort(findP(m, sugg[0].outId))) + '</div>' : '') + '</div>';
   }
 
   const share = s.fairPlay ? fairShare(m) : 0;
@@ -1633,9 +2073,11 @@ function viewLive(r){
       '<div class="nm">' + esc(p.name) + '</div>' + badges(ps) +
       (share ? '<div class="bar"><i data-bar="' + id + '" style="width:' + Math.min(100, ps.played / share * 100) + '%"></i></div>' : '') + '</button>';
   };
-  h += '<div class="sec"><h2>' + esc(t.onPitch) + ' · ' + esc(m.ownName) + '</h2><span class="meta num">' + st.onField.length + '/' + s.playersOnField + '</span></div>' +
-    '<div class="grid">' + st.onField.map(id => tile(id, false)).join('') + '</div>';
-  h += '<div class="sec"><h2>' + esc(t.benchT) + '</h2><button class="link" data-act="addLate" data-side="own">' + esc(t.addPlayer) + '</button></div>' +
+  h += '<div class="sec"><h2>' + esc(t.onPitch) + ' · ' + esc(m.ownName) + '</h2><span>' + (st.onField.length ? '<button class="link" data-act="fieldView" style="margin-right:12px">' +
+    esc(FIELD_VIEW ? t.viewTiles : t.viewField) + '</button>' : '') + '<span class="meta num">' + st.onField.length + '/' + s.playersOnField + '</span></span></div>' +
+    (FIELD_VIEW && st.onField.length ? fieldView(m, st) : '<div class="grid">' + st.onField.map(id => tile(id, false)).join('') + '</div>');
+  h += '<div class="sec"><h2>' + esc(t.benchT) + '</h2><span>' + (st.bench.length && st.onField.length ? '<button class="link" data-act="blockSub" style="margin-right:12px">' + esc(t.blockSub) + '</button>' : '') +
+    '<button class="link" data-act="addLate" data-side="own">' + esc(t.addPlayer) + '</button></span></div>' +
     (st.bench.length ? '<div class="grid">' + st.bench.map(id => tile(id, true)).join('') + '</div>' : '<div class="empty">' + esc(t.nobodyBench) + '</div>');
   if(st.sentOff.length) h += '<div class="sentoff">' + esc(t.sentOff) + ': ' + st.sentOff.map(id => esc(pShort(findP(m, id)))).join(', ') + '</div>';
 
@@ -1652,6 +2094,16 @@ function viewLive(r){
     fmtMinute(e, m) + '</span><span class="mk" style="background:' + evColor(e) + '"></span><span class="tx">' + esc(describe(m, e)) +
     (e.side === 'opp' && e.type !== 'goal' && e.playerId ? ' (' + esc(m.oppName) + ')' : '') + '</span></button>').join('') : '<div class="empty">' + esc(t.noEvents) + '</div>';
   return h;
+}
+function fieldView(m, st){
+  return '<div class="pitch"><i class="circ"></i><i class="box"></i><i class="six"></i>' + fieldLayout(m, st).map(o => {
+    const p = findP(m, o.id), ps = st.stats[o.id];
+    const mark = (ps.goals ? '<span class="pg">⚽' + (ps.goals > 1 ? ps.goals : '') + '</span>' : '') +
+      (ps.yellow ? '<span class="pc" style="background:var(--yellow)"></span>' : '');
+    return '<button class="pp' + (o.id === st.keeperId ? ' kp' : '') + '" style="left:' + o.x.toFixed(1) + '%;top:' + o.y.toFixed(1) + '%" data-act="ownPlayer" data-id="' + o.id + '">' +
+      '<span class="dotn num">' + (p.number == null ? '–' : p.number) + mark + '</span><span class="pn">' + esc(p.name.split(' ')[0]) + '</span>' +
+      '<span class="pm num" data-min="' + o.id + '">' + Math.floor(ps.played / 60000) + "'</span></button>";
+  }).join('') + '</div>';
 }
 /* ----- Elfmeterschiessen ----- */
 function shootoutScore(m){
@@ -1683,6 +2135,21 @@ function matchResult(m, score){
   return 0;
 }
 
+/* ----- Block-Wechsel: mehrere Spieler auf einmal ----- */
+function openBlockSub(outs, ins){
+  const t = T(), m = curMatch(), st = derive(m, Clock.game(m.clock, Date.now()));
+  const chip = (id, k, on) => '<button class="chip' + (on ? ' on' : '') + '" data-act="blockToggle" data-k="' + k + '" data-id="' + id + '">' +
+    esc(pShort(findP(m, id))) + ' <span class="num" style="opacity:.7">' + Math.floor(st.stats[id].played / 60000) + "'</span></button>";
+  const ok = outs.size > 0 && outs.size === ins.size;
+  openSheet(t.blockSub, t.blockHint,
+    '<div class="hint" style="margin:0 2px 6px;font-weight:700">⬇ ' + esc(t.blockOut) + ' (' + outs.size + ')</div><div class="chips">' +
+      st.onField.map(id => chip(id, 'out', outs.has(id))).join('') + '</div>' +
+    '<div class="hint" style="margin:14px 2px 6px;font-weight:700">⬆ ' + esc(t.blockIn) + ' (' + ins.size + ')</div><div class="chips">' +
+      st.bench.map(id => chip(id, 'in', ins.has(id))).join('') + '</div>' +
+    '<button class="btn" data-act="blockDo" style="margin-top:16px"' + (ok ? '' : ' disabled') + '>' + esc(ok ? t.blockGo(outs.size) : t.blockNeed) + '</button>',
+    { outs, ins });
+}
+
 /* ----- Vorlage waehlen ----- */
 function openAssistPicker(m, eventId, scorerId){
   const t = T();
@@ -1697,7 +2164,12 @@ function eventEditor(m, e){
   const t = T();
   let h = '';
   if(e.type !== 'keeper'){
-    h += '<div class="hint" style="margin:0 2px 6px;font-weight:700">' + esc(t.editMinute) + '</div><div class="row2" style="gap:6px;margin-bottom:12px">' +
+    const base = periodStartMin(m, e.period), mn = Math.floor(e.periodMs / 60000) + 1;
+    const curMin = e.brk || mn > periodLen(m, e.period) ? '' : base + mn;
+    h += '<div class="hint" style="margin:0 2px 6px;font-weight:700">' + esc(t.editMinute) + '</div>' +
+      '<div class="row2" style="gap:6px;margin-bottom:6px"><input class="in" id="ev-min" type="number" inputmode="numeric" min="1" max="200" placeholder="' + esc(t.minutePh) + '" value="' + curMin + '" />' +
+      '<button class="btn soft" data-act="setMin" style="flex:0 0 auto;width:auto">' + esc(t.setMinute) + '</button></div>' +
+      '<div class="row2" style="gap:6px;margin-bottom:12px">' +
       [-5, -1, 1, 5].map(d => '<button class="btn soft" data-act="editMin" data-d="' + d + '">' + (d > 0 ? '+' : '−') + Math.abs(d) + ' min</button>').join('') + '</div>';
   }
   if(e.type === 'goal'){
@@ -1757,17 +2229,63 @@ function viewStats(r){
       (a.yellowRed ? ' <span class="cardi" style="background:var(--amber)"></span>' + (a.yellowRed > 1 ? '×' + a.yellowRed : '') : '') +
       (a.red ? ' <span class="cardi" style="background:var(--red)"></span>' + (a.red > 1 ? '×' + a.red : '') : '');
     const low = !a.keeper && a.squad && a.share < S.fairAvg - 15;
-    return '<div class="sp"><div class="top"><span class="pnum num">' + (a.number == null ? '–' : a.number) + '</span><span class="main"><div class="t1">' + esc(a.name) +
+    return '<button class="sp" data-act="goPlayer" data-id="' + a.id + '"><div class="top"><span class="pnum num">' + (a.number == null ? '–' : a.number) + '</span><span class="main"><div class="t1">' + esc(a.name) +
       (a.keeper ? ' <span class="twb">TW</span>' : '') + '</div><div class="t2 num">' + esc(t.appsLine(a.apps, a.starts)) + ' · ' + a.minutes + ' min · ' + esc(t.avgMin(a.avg)) +
       '</div></span><span class="gl num">' + (a.goals ? '⚽ ' + a.goals : '') + (a.pens ? '<small>' + esc(t.pens(a.pens)) + '</small>' : '') +
       (a.assists ? '<small>' + esc(t.assistsN(a.assists)) + '</small>' : '') + '</span></div>' +
       '<div class="bar"><i style="width:' + Math.min(100, a.share) + '%' + (low ? ';background:var(--amber)' : '') + '"></i></div>' +
       '<div class="sl"><span class="num">' + esc(t.shareOf(a.share)) + ' · ' + esc(t.ofSquad(a.squad)) + '</span><span class="badges" style="margin:0">' + cards +
-      (a.own ? ' <span>ET' + (a.own > 1 ? '×' + a.own : '') + '</span>' : '') + '</span></div></div>';
+      (a.own ? ' <span>ET' + (a.own > 1 ? '×' + a.own : '') + '</span>' : '') + '</span></div></button>';
   }).join('');
-  h += '<div class="hint" style="margin-top:10px">' + esc(t.fairNote) + '</div>';
+  h += '<div class="hint" style="margin-top:10px">' + esc(t.playerTap) + '. ' + esc(t.fairNote) + '</div>';
+  const H = h2h(team.id, r.range);
+  if(H.length){
+    h += '<div class="sec"><h2>' + esc(t.h2hTitle) + '</h2><span class="meta">' + H.length + '</span></div>' + H.map(x =>
+      '<button class="list-row" data-act="statsOpp" data-k="' + esc(x.key) + '"><span class="main"><div class="t1">' + esc(x.name) + '</div><div class="t2 num">' +
+      x.n + ' ' + esc(t.games) + ' · ' + esc(t.wdl(x.w, x.d, x.l)) + '</div></span><span class="big num">' + x.gf + ':' + x.ga + '</span></button>' +
+      (r.opp === x.key ? '<div style="margin:-2px 0 10px 14px">' + x.matches.map(matchRow).join('') + '</div>' : '')).join('');
+  }
   h += '<button class="btn" data-act="shareStats" style="margin-top:16px">' + esc(t.shareStats) + '</button>' +
     '<button class="btn soft" data-act="exportStats" style="margin-top:8px">' + esc(t.exportCsv) + '</button>';
+  return h;
+}
+
+/* ----- Spielerprofil ----- */
+function viewPlayer(r){
+  const t = T(), team = teamById(r.team);
+  r.range = r.range || 'season';
+  const S = team ? teamStats(team.id, r.range) : null;
+  const a = S && S.players.find(x => x.id === r.id);
+  const y = seasonStart(Date.now());
+  const chips = '<div class="chips">' + [['season', t.rangeSeason(seasonLabel(y))], ['first', t.rangeFirst], ['second', t.rangeSecond], ['all', t.rangeAll]]
+    .map(x => '<button class="chip' + (r.range === x[0] ? ' on' : '') + '" data-act="statsRange" data-v="' + x[0] + '">' + esc(x[1]) + '</button>').join('') + '</div>';
+  const kp = team && team.players.find(x => x.id === r.id);
+  if(!a){ setTop(kp ? kp.name : t.statsTitle); return chips + '<div class="empty" style="margin-top:12px">' + esc(t.statsEmpty) + '</div>'; }
+  setTop(a.name);
+  const kpi = (v, l) => '<div class="kpi"><b class="num">' + v + '</b><span>' + esc(l) + '</span></div>';
+  let h = chips + '<div class="card" style="margin-top:12px"><div style="display:flex;align-items:center;gap:12px"><span class="pnum num" style="font-size:26px">' +
+    (a.number == null ? '–' : a.number) + '</span><div style="flex:1;min-width:0"><div style="font-size:21px;font-weight:900">' + esc(a.name) + (a.keeper ? ' <span class="twb">TW</span>' : '') +
+    '</div><div class="hint" style="margin:2px 0 0">' + esc(rangeName(r.range)) + ' · ' + esc(t.ofSquad(a.squad)) + '</div></div></div>' +
+    '<div class="kpis">' + kpi(a.apps, t.kpiApps) + kpi(a.minutes, t.kpiMin) + kpi(a.avg, t.kpiAvg) +
+    kpi(a.goals + (a.pens ? '<small style="font-size:12px;color:var(--muted)"> (' + a.pens + ')</small>' : ''), t.kpiGoals) + kpi(a.assists, t.kpiAssists) + kpi(a.share + '%', t.kpiShare) + '</div>' +
+    (a.yellow || a.yellowRed || a.red ? '<div class="badges" style="margin-top:10px;justify-content:center">' +
+      (a.yellow ? '<span class="cardi" style="background:var(--yellow)"></span>×' + a.yellow : '') +
+      (a.yellowRed ? ' <span class="cardi" style="background:var(--amber)"></span>×' + a.yellowRed : '') +
+      (a.red ? ' <span class="cardi" style="background:var(--red)"></span>×' + a.red : '') + '</div>' : '') + '</div>';
+  h += '<div class="sec"><h2>' + esc(t.games) + '</h2><span class="meta">' + a.squad + '</span></div>';
+  h += S.matches.filter(m => m.ownPlayers.some(p => p.id === a.id)).map(m => {
+    const st = derive(m, m.clock.completedMs), ps = st.stats[a.id];
+    const started = m.startingIds.indexOf(a.id) !== -1;
+    const came = !started && (m.events.some(e => e.type === 'sub' && e.side === 'own' && e.inId === a.id) || ps.played > 0);
+    const res = matchResult(m, st.score);
+    const extra = (ps.goals ? ' · ⚽' + (ps.goals > 1 ? '×' + ps.goals : '') : '') + (ps.assists ? ' · ' + t.assistShort + (ps.assists > 1 ? '×' + ps.assists : '') : '') +
+      (ps.yellow ? ' · 🟨' : '') + (ps.yellowRed ? ' · 🟨🟥' : '') + (ps.red ? ' · 🟥' : '');
+    return '<button class="list-row" data-act="openMatch" data-id="' + m.id + '"><span class="res" style="background:' +
+      (res > 0 ? 'var(--green)' : res === 0 ? '#7a7a7a' : 'var(--red)') + '">' + esc(res > 0 ? t.resW : res === 0 ? t.resD : t.resL) + '</span>' +
+      '<span class="main"><div class="t1">' + esc((m.isHome ? '' : '@ ') + m.oppName) + '</div><div class="t2 num">' + fmtDate(matchDate(m)) + ' · ' +
+      esc(started ? t.started : came ? t.subbedIn : t.notUsed) + (started || came ? ' · ' + Math.round(ps.played / 60000) + ' min' : '') + esc(extra) + '</div></span>' +
+      '<span class="big num">' + scoreText(m, st.score) + '</span></button>';
+  }).join('') + '<div class="hint">' + esc(t.profileHint) + '</div>';
   return h;
 }
 
@@ -1780,6 +2298,7 @@ function viewAbout(){
   return '<div class="card about-head"><img src="image.png" alt="" width="72" height="72" /><div><div class="ah1">PitchPro</div>' +
     '<div class="hint" style="margin:2px 0 0">' + esc(t.aboutTag) + '</div><div class="hint" style="margin:4px 0 0">' + esc(t.version) + ' ' + APP_VERSION + '</div></div></div>' +
     t.aboutSections.map(x => sec(x[0], x[1])).join('') +
+    '<button class="btn soft" data-act="onbShow" style="margin-top:18px">' + esc(t.onbAgain) + '</button>' +
     '<div class="row2" style="margin-top:18px"><a class="btn ghost" style="text-decoration:none" href="' + (LANG === 'de' ? 'datenschutz.html' : 'datenschutz-en.html') + '">' + esc(t.privacy) + '</a>' +
     '<a class="btn ghost" style="text-decoration:none" href="' + (LANG === 'de' ? 'impressum.html' : 'impressum-en.html') + '">' + esc(t.imprint) + '</a></div>';
 }
@@ -1798,8 +2317,10 @@ function viewReport(r){
     (st.halfTime && m.settings.periods === 2 ? '<div class="ht">' + esc(t.htShort) + ' ' + scoreText(m, st.halfTime) + '</div>' : '') +
     (shootoutScore(m) ? '<div class="ht" style="color:var(--text)">' + esc(t.soShort) + ' ' + scoreText(m, shootoutScore(m)) + '</div>' : m.extra ? '<div class="ht">' + esc(t.aetLong) + '</div>' : '') +
     '<div class="dt">' + fmtDate(matchDate(m), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) + '</div></div>' +
-    '<button class="btn lg" data-act="shareReport" style="margin-top:14px">' + esc(t.shareReport) + '</button>';
+    '<button class="btn lg" data-act="shareReport" style="margin-top:14px">' + esc(t.shareReport) + '</button>' +
+    '<button class="btn soft" data-act="shareImage" style="margin-top:8px">' + esc(t.shareImage) + '</button>';
   if(m.clock.status !== 'finished') h += '<button class="btn soft" data-act="back" style="margin-top:8px">' + esc(t.backToGame) + '</button>';
+  else h += '<button class="btn ghost" data-act="editMatch" style="margin-top:8px">' + esc(t.editMatch) + '</button>';
   h += '<div class="sec"><h2>' + esc(t.events) + '</h2></div>' + (m.events.length ? '<div class="card" style="padding:4px 14px">' +
     sortEvents(m.events).map(e => '<div class="ev"><span class="mi num">' + fmtMinute(e, m) + '</span><span class="tx">' + esc(describe(m, e)) +
       (e.side === 'opp' && e.type !== 'goal' && e.playerId ? ' (' + esc(m.oppName) + ')' : '') + '</span></div>').join('') + '</div>' : '<div class="empty">' + esc(t.noEvents) + '</div>');
@@ -1812,6 +2333,99 @@ function viewReport(r){
         '<div class="bar"><i style="width:' + (ms / max * 100) + '%"></i></div></div>';
     }).join('') + '</div>';
   return h;
+}
+
+/* ---------------------------------------------------------------------
+   SPIELBERICHT ALS BILD (1080 px breit, fuer WhatsApp & Co.)
+--------------------------------------------------------------------- */
+function reportCanvas(m){
+  const t = T(), st = derive(m, Clock.game(m.clock, Date.now()));
+  const W = 1080, P = 70;
+  const evs = sortEvents(m.events);
+  const goals = evs.filter(e => e.type === 'goal'), cards = evs.filter(e => e.type === 'card');
+  const rows = Math.max(1, goals.length) + (cards.length ? cards.length + 1 : 0);
+  const H = Math.max(1080, 690 + rows * 62 + 150);
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const g = c.getContext('2d');
+  const F = (w, px) => w + ' ' + px + 'px system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif';
+  const grd = g.createLinearGradient(0, 0, 0, H); grd.addColorStop(0, '#2a7f35'); grd.addColorStop(1, '#0f3d18');
+  g.fillStyle = grd; g.fillRect(0, 0, W, H);
+  g.fillStyle = 'rgba(255,255,255,0.04)'; for(let y = 0; y < H; y += 180) g.fillRect(0, y, W, 90);
+  const fit = (txt, max) => { txt = String(txt); if(g.measureText(txt).width <= max) return txt;
+    while(txt.length > 1 && g.measureText(txt + '…').width > max) txt = txt.slice(0, -1); return txt + '…'; };
+  const wrap2 = (txt, x, y, max, lh) => {   // hoechstens zwei Zeilen
+    const words = String(txt).split(' '); let a = '';
+    let i = 0;
+    for(; i < words.length; i++){ const n = a ? a + ' ' + words[i] : words[i]; if(g.measureText(n).width > max && a) break; a = n; }
+    const b = words.slice(i).join(' ');
+    if(!b){ g.fillText(fit(a, max), x, y); return; }
+    g.fillText(fit(a, max), x, y - lh / 2); g.fillText(fit(b, max), x, y + lh / 2);
+  };
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillStyle = 'rgba(255,255,255,0.8)'; g.font = F(600, 34);
+  g.fillText(fmtDate(matchDate(m), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }), W / 2, 110);
+  const home = m.isHome ? m.ownName : m.oppName, away = m.isHome ? m.oppName : m.ownName;
+  g.fillStyle = '#fff'; g.font = F(800, 46);
+  wrap2(home, W * 0.2, 340, 300, 54); wrap2(away, W * 0.8, 340, 300, 54);
+  g.font = F(900, 170); g.fillText(scoreText(m, st.score), W / 2, 340);
+  g.font = F(700, 36); g.fillStyle = 'rgba(255,255,255,0.85)';
+  const so = shootoutScore(m);
+  const sub = [st.halfTime && m.settings.periods === 2 ? t.htShort + ' ' + scoreText(m, st.halfTime) : '',
+    so ? t.soShort + ' ' + scoreText(m, so) : m.extra ? t.aetLong : ''].filter(Boolean).join('  ·  ');
+  if(sub) g.fillText(sub, W / 2, 500);
+  g.fillStyle = 'rgba(255,255,255,0.3)'; g.fillRect(P, 570, W - 2 * P, 3);
+  let y = 640;
+  g.textBaseline = 'middle';
+  const line = (min, txt, color, mark) => {
+    g.textAlign = 'right'; g.font = F(800, 38); g.fillStyle = 'rgba(255,255,255,0.9)'; g.fillText(min, P + 120, y);
+    if(mark) mark(P + 150, y);
+    g.textAlign = 'left'; g.font = F(600, 38); g.fillStyle = color; g.fillText(fit(txt, W - P - (P + 200)), P + 200, y);
+    y += 62;
+  };
+  if(!goals.length){ g.textAlign = 'center'; g.font = F(600, 38); g.fillStyle = 'rgba(255,255,255,0.8)'; g.fillText(t.imgNoGoals, W / 2, y); y += 62; }
+  goals.forEach(e => line(fmtMinute(e, m), describe(m, e) + (e.side === 'opp' && e.kind !== 'ownGoal' && e.playerId ? ' – ' + m.oppName : ''), e.side === 'own' ? '#fff' : '#bfe0f5',
+    (x, yy) => { g.font = F(400, 32); g.textAlign = 'left'; g.fillStyle = '#fff'; g.fillText('⚽', x, yy); }));
+  if(cards.length){
+    y += 10; g.textAlign = 'left'; g.font = F(800, 30); g.fillStyle = 'rgba(255,255,255,0.7)'; g.fillText(t.imgCards.toUpperCase(), P, y); y += 52;
+    cards.forEach(e => line(fmtMinute(e, m), describe(m, e) + (e.side === 'opp' && e.playerId ? ' (' + m.oppName + ')' : ''), e.side === 'own' ? '#fff' : '#bfe0f5',
+      (x, yy) => { g.fillStyle = e.card === 'yellow' ? '#f4c20d' : e.card === 'red' ? '#e53935' : '#ff9f1c'; g.fillRect(x + 6, yy - 18, 24, 34); }));
+  }
+  g.textAlign = 'center'; g.font = F(800, 30); g.fillStyle = 'rgba(255,255,255,0.55)';
+  g.fillText(t.imgFooter, W / 2, H - 60);
+  return c;
+}
+async function shareImageBlob(blob, name){
+  const ss = window.plugins && window.plugins.socialsharing;
+  if(window.TbShare && window.TbShare.shareFile){ await window.TbShare.shareFile(name, 'image/png', await blobToBase64(blob)); return; }
+  if(window.cordova && ss && ss.shareWithOptions){
+    const files = ['df:' + name + ';data:image/png;base64,' + await blobToBase64(blob)];
+    return new Promise(res => ss.shareWithOptions({ files, chooserTitle: name, iPadPopupCoordinates: iPadAnchor() }, () => res(), () => res()));
+  }
+  try {
+    const f = new File([blob], name, { type: 'image/png' });
+    if(navigator.canShare && navigator.canShare({ files: [f] })){ await navigator.share({ files: [f] }); return; }
+  } catch(e){ if(e && e.name === 'AbortError') return; }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.download = name; a.href = url; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+
+/* ---------------------------------------------------------------------
+   EINFUEHRUNG beim ersten Start (3 Schritte)
+--------------------------------------------------------------------- */
+let ONB = -1;
+function onbDone(){ try { return localStorage.getItem('pp_onboarding_done') === '1'; } catch(e){ return true; } }
+function renderOnb(){
+  const el = $('onb');
+  if(ONB < 0){ el.hidden = true; el.innerHTML = ''; return; }
+  const t = T(), steps = t.onbSteps, x = steps[ONB], last = ONB === steps.length - 1;
+  const flags = $('flags').innerHTML.replace(/gbc/g, 'gbc2');
+  el.innerHTML = '<div class="otop">' + flags + '<span style="flex:1"></span><button class="link" data-act="onbEnd">' + esc(t.onbSkip) + '</button></div>' +
+    '<div class="ob"><div class="oi">' + x[0] + '</div><h2>' + esc(x[1]) + '</h2><p>' + esc(x[2]) + '</p></div>' +
+    '<div class="dots">' + steps.map((_, i) => '<i class="' + (i === ONB ? 'on' : '') + '"></i>').join('') + '</div>' +
+    '<button class="btn lg" data-act="' + (last ? 'onbEnd' : 'onbNext') + '">' + esc(last ? t.onbGo : t.onbNext) + '</button>';
+  el.querySelectorAll('.flag').forEach(f => f.classList.toggle('on', f.dataset.v === LANG));
+  el.hidden = false;
 }
 
 /* ---------------------------------------------------------------------
@@ -1959,6 +2573,9 @@ const A = {
     openSheet(t.settings, '', '<div class="hint" style="margin:0 2px 6px;font-weight:700">' + esc(t.language) + '</div><div class="chips" style="margin-bottom:16px">' +
       '<button class="chip' + (LANG === 'de' ? ' on' : '') + '" data-act="lang" data-v="de">Deutsch</button>' +
       '<button class="chip' + (LANG === 'en' ? ' on' : '') + '" data-act="lang" data-v="en">English</button></div>' +
+      '<div class="hint" style="margin:0 2px 6px;font-weight:700">' + esc(t.appearance) + '</div><div class="chips" style="margin-bottom:16px">' +
+      '<button class="chip' + (THEME === 'dark' ? ' on' : '') + '" data-act="theme" data-v="dark">☾ ' + esc(t.themeDark) + '</button>' +
+      '<button class="chip' + (THEME === 'light' ? ' on' : '') + '" data-act="theme" data-v="light">☀︎ ' + esc(t.themeLight) + '</button></div>' +
       '<div class="hint" style="margin:0 2px 6px;font-weight:700">' + esc(t.backup) + '</div>' +
       '<button class="btn soft" data-act="backupExport">' + esc(t.backupExport) + '</button>' +
       '<button class="btn soft" data-act="backupImport" style="margin-top:8px">' + esc(t.backupImport) + '</button>' +
@@ -1967,7 +2584,78 @@ const A = {
       '<div class="row2" style="margin-top:8px"><a class="btn ghost" style="text-decoration:none" href="' + (LANG === 'de' ? 'datenschutz.html' : 'datenschutz-en.html') + '">' + esc(t.privacy) + '</a>' +
       '<a class="btn ghost" style="text-decoration:none" href="' + (LANG === 'de' ? 'impressum.html' : 'impressum-en.html') + '">' + esc(t.imprint) + '</a></div>');
   },
-  lang(el){ LANG = el.dataset.v; try { localStorage.setItem('pp_lang', LANG); } catch(e){} document.documentElement.lang = LANG; closeSheet(); render(false); },
+  lang(el){
+    if(el.dataset.v === LANG && !sheetOpen()) return;
+    LANG = el.dataset.v; try { localStorage.setItem('pp_lang', LANG); } catch(e){}
+    document.documentElement.lang = LANG;
+    if(sheetOpen()) closeSheet();
+    render(false);
+    if(ONB >= 0) renderOnb();
+  },
+  onbNext(){ ONB = Math.min(ONB + 1, T().onbSteps.length - 1); renderOnb(); },
+  onbEnd(){ ONB = -1; try { localStorage.setItem('pp_onboarding_done', '1'); } catch(e){} renderOnb(); },
+  onbShow(){ ONB = 0; renderOnb(); },
+  fieldView(){ FIELD_VIEW = !FIELD_VIEW; try { localStorage.setItem('pp_field', FIELD_VIEW ? '1' : '0'); } catch(e){} render(false); },
+  goPlayer(el){ const r = cur(); go({ v: 'player', team: r.id, id: el.dataset.id, range: r.range }); },
+  statsOpp(el){ const r = cur(); r.opp = r.opp === el.dataset.k ? null : el.dataset.k; render(false); },
+  pastMatch(){ const d = newDraft(); d.past = true; d.date = isoDay(Date.now()); go(d); },
+  editMatch(){ const r = cur(); go({ v: 'live', id: r.id, edit: true }); },
+  async shareImage(){
+    const m = curMatch(); if(!m) return;
+    try {
+      const c = reportCanvas(m);
+      const blob = await new Promise((res, rej) => c.toBlob(b => b ? res(b) : rej(new Error('png')), 'image/png'));
+      await shareImageBlob(blob, fileName(m.ownName + '_' + m.oppName, '.png'));
+    } catch(e){ toast(String(e && e.message || e)); }
+  },
+  planAuto(){
+    const d = cur(), team = teamById(d.ownId); if(!team) return;
+    const pl = team.players.slice().sort(byNumber);
+    const present = pl.filter(p => role(d, p.id) !== 'absent').map(p => p.id);
+    const starters = pl.filter(p => role(d, p.id) === 'start').map(p => p.id);
+    d.plan = autoPlan(d.settings, present, starters, d.keeperId);
+    render(false);
+  },
+  planClear(){ cur().plan = null; render(false); },
+  planEdit(el){ openPlanStep(+el.dataset.i); },
+  planToggle(el){
+    const d = cur(), i = sheetCtx && sheetCtx.planIdx; if(i == null || !d.plan || !d.plan[i]) return;
+    const x = d.plan[i], arr = el.dataset.k === 'out' ? x.outs : x.ins, j = arr.indexOf(el.dataset.id);
+    if(j === -1) arr.push(el.dataset.id); else arr.splice(j, 1);
+    openPlanStep(i);
+  },
+  planDone(){ closeSheet(); render(false); },
+  planDo(el){
+    const m = curMatch(); if(!m) return;
+    const ps = nextPlanStep(m, derive(m, Clock.game(m.clock, Date.now())));
+    if(!ps || ps.idx !== +el.dataset.i){ render(false); return; }
+    ps.pairs.forEach(([o, n]) => addSub(m.id, 'own', o, n));
+    patchMatch(m.id, x => Object.assign({}, x, { plan: x.plan.map((s, i) => i === ps.idx ? Object.assign({}, s, { st: 'done' }) : s) }));
+    render(false); toast(T().blockDone(ps.pairs.length));
+  },
+  planSkip(el){
+    const i = +el.dataset.i;
+    patchMatch(cur().id, x => Object.assign({}, x, { reminderAckMs: Clock.game(x.clock, Date.now()),
+      plan: x.plan ? x.plan.map((s, j) => j === i ? Object.assign({}, s, { st: 'skip' }) : s) : x.plan }));
+    render(false);
+  },
+  setMin(){
+    const id = sheetCtx && sheetCtx.eventId, inp = $('ev-min'), v = inp ? parseInt(inp.value, 10) : NaN;
+    if(!id || !isFinite(v) || v < 1 || v > 300) return;
+    const m = curMatch(), tp = totalPeriods(m);
+    let p = tp;
+    for(let i = 1; i <= tp; i++){ if(v <= periodStartMin(m, i) + periodLen(m, i)){ p = i; break; } }
+    const pms = Math.max(0, (v - periodStartMin(m, p) - 1) * 60000 + 30000);
+    const start = periodStartMs(Object.assign({}, m, { events: m.events.filter(x => x.id !== id) }), p);
+    patchEvent(m.id, id, e => {
+      e.period = p; e.periodMs = pms; delete e.brk;
+      let gm = start + pms;
+      if(m.clock.status === 'finished') gm = Math.min(gm, m.clock.completedMs);
+      e.gameMs = Math.max(0, gm);
+      return e;
+    });
+    refreshEventSheet(id);
+  },
   async backupExport(){
     closeSheet();
     try {
@@ -1979,14 +2667,8 @@ const A = {
   backupImport(){
     closeSheet();
     pickFile(data => {
-      if(data && data.kind === 'pitchpro-backup'){
-        const teams = (data.teams || []).map(cleanTeam).filter(Boolean);
-        const matches = (Array.isArray(data.matches) ? data.matches : []).map(cleanMatch).filter(Boolean);
-        teams.forEach(t => { if(!DB.teams.some(x => x.id === t.id)) DB.teams.push(t); });
-        matches.forEach(m => { if(!DB.matches.some(x => x.id === m.id)) DB.matches.push(m); });
-        DB.matches.sort((a, b) => matchDate(b) - matchDate(a));
-        save(); render(false); toast(T().backupImported(teams.length, matches.length));
-      } else if(data && data.kind === 'squads'){ importSquads(data); }
+      if(data && data.kind === 'pitchpro-backup') importBackup(data);
+      else if(data && data.kind === 'squads') importSquads(data);
       else toast(T().importError);
     });
   },
@@ -2072,7 +2754,40 @@ const A = {
     go({ v: 'team', id: team.id });
   },
   openTeam: el => go({ v: 'team', id: el.dataset.id }),
-  importTB(){ pickFile(importSquads); },
+  importSquad(){
+    pickFile((data, text, fname) => {
+      const t = T();
+      if(data && data.kind === 'squads'){ importSquads(data); return; }
+      if(data && data.kind === 'pitchpro-backup'){ importBackup(data); return; }
+      const players = data ? [] : parseFileRoster(text);
+      if(!players.length){ toast(t.importError); return; }
+      // Liste ohne Mannschaftsnamen: fragen, wohin
+      const base = String(fname || '').replace(/\.[^.]+$/, '').replace(/[_]+/g, ' ').trim().slice(0, 50) || t.newTeam;
+      const own = DB.teams.filter(x => x.isOwn);
+      openSheet(t.importWhere, t.nPlayers(players.length),
+        own.map(x => act('importInto', x.name, t.nPlayers(x.players.length), 'var(--green)', ' data-id="' + x.id + '"')).join('') +
+        act('importInto', t.importNewTeam(base), '', 'var(--opp)', ' data-id=""'), { players, base });
+    });
+  },
+  importInto(el){
+    const ctx = sheetCtx; if(!ctx) return;
+    let team = el.dataset.id ? teamById(el.dataset.id) : null;
+    if(!team){ team = { id: uid(), name: ctx.base, isOwn: true, players: [] }; DB.teams.push(team); DB.activeTeamId = team.id; }
+    const n = mergeIntoTeam(team, ctx.players);
+    save(); closeSheet(); toast(T().playersImported(n, team.name));
+    go({ v: 'team', id: team.id });
+  },
+  pasteFile(){
+    pickFile((data, text) => {
+      let players = [];
+      if(data && data.kind === 'squads'){ const l = teamsFromSquadFile(data); players = l.length ? l[0].players : []; }
+      else if(!data) players = parseFileRoster(text);
+      const ta = $('pl-text'); if(!ta) return;
+      if(!players.length){ toast(T().importError); return; }
+      ta.value = players.map(p => (p.number != null ? p.number + ' ' : '') + p.name + (p.keeper ? ' (TW)' : '')).join('\n');
+      previewList();
+    });
+  },
   teamOwn(el){ const tm = teamById(cur().id); tm.isOwn = el.dataset.v === '1'; if(!tm.isOwn && DB.activeTeamId === tm.id) DB.activeTeamId = null; save(); render(false); },
   addPlayer(){
     const tm = teamById(cur().id);
@@ -2085,7 +2800,9 @@ const A = {
   pasteList(){
     const t = T();
     openSheet(t.pasteTitle, t.pasteSub, '<textarea class="in" id="pl-text" placeholder="10 Max Mustermann\n7 Lena Schmidt\nBecker, Jonas (TW)"></textarea>' +
-      (navigator.clipboard && navigator.clipboard.readText ? '<button class="btn soft" data-act="clipboardTo" data-target="pl-text" style="margin-top:8px">' + esc(t.fromClipboard) + '</button>' : '') +
+      '<div class="row2" style="margin-top:8px">' +
+      (navigator.clipboard && navigator.clipboard.readText ? '<button class="btn soft" data-act="clipboardTo" data-target="pl-text">' + esc(t.fromClipboard) + '</button>' : '') +
+      '<button class="btn soft" data-act="pasteFile">' + esc(t.openFile) + '</button></div>' +
       '<div id="pl-prev"></div><button class="btn" id="pl-take" data-act="takeList" disabled style="margin-top:8px">' + esc(t.noneFound) + '</button>');
     $('pl-text').addEventListener('input', previewList);
   },
@@ -2167,10 +2884,25 @@ const A = {
       startingIds: team.players.filter(p => role(d, p.id) === 'start').map(p => p.id),
       keeperId: d.keeperId, settings: Object.assign({}, d.settings), clock: Clock.fresh(), events: [], reminderAckMs: 0
     };
-    // Spieler, die heute nicht dabei waren, behalten ihren Haken fuer TacticBoard
-    team.players.forEach(p => { p.sel = role(d, p.id) !== 'absent'; });
-    DB.matches.unshift(m);
-    DB.lastSettings = Object.assign({}, d.settings);
+    if(d.past){
+      // Nachgetragenes Spiel: abgeschlossen, volle Spielzeit, ohne Erinnerung
+      const s = m.settings;
+      s.subIntervalMinutes = 0; s.fairPlay = false;
+      m.manual = true; m.kickoffAt = dayTs(d.date);
+      m.clock = { status: 'finished', period: s.periods, periodElapsedMs: s.periodMinutes * 60000, completedMs: s.periods * s.periodMinutes * 60000, runningSince: null };
+      DB.matches.push(m);
+      DB.matches.sort((a, b) => matchDate(b) - matchDate(a));
+    } else {
+      const present = players.map(p => p.id);
+      fixPlan(d, present, m.startingIds);
+      const slots = planSlots(d.settings);
+      const plan = (d.plan || []).map((x, i) => { const pr = pairsOf(x); return { min: slots[i], outs: pr.map(q => q[0]), ins: pr.map(q => q[1]), st: 'open' }; }).filter(x => x.outs.length);
+      if(plan.length) m.plan = plan;
+      // Spieler, die heute nicht dabei waren, behalten ihren Haken fuer TacticBoard
+      team.players.forEach(p => { p.sel = role(d, p.id) !== 'absent'; });
+      DB.matches.unshift(m);
+      DB.lastSettings = Object.assign({}, d.settings);
+    }
     save();
     replace({ v: 'live', id: m.id });
   },
@@ -2192,6 +2924,48 @@ const A = {
       patchMatch(m.id, x => Object.assign({}, x, { clock: Clock.endPeriod(x.clock, Date.now(), totalPeriods(x)) }));
       vibrate(60); render(false);
     });
+  },
+  undo(){
+    const m = curMatch(); if(!m || !m.events.length) return;
+    const e = m.events[m.events.length - 1];          // zuletzt notiert (nicht nach Minute)
+    const txt = describe(m, e);
+    patchMatch(m.id, x => Object.assign({}, x, { events: x.events.slice(0, -1) }));
+    vibrate(20); render(false); toast(T().undone(txt));
+  },
+  quickGoal(){
+    const t = T(), m = curMatch();
+    const st = derive(m, Clock.game(m.clock, Date.now()));
+    openSheet(t.quickGoalQ, m.ownName,
+      st.onField.map(id => act('quickGoalDo', pLabel(findP(m, id)), '', 'var(--green)', ' data-p="' + id + '"')).join('') +
+      act('quickGoalDo', t.scorerLater, t.scorerLaterHint, '', ' data-p=""'));
+  },
+  quickGoalDo(el){
+    const m = curMatch();
+    const eid = pushEvent(m.id, { type: 'goal', side: 'own', kind: 'normal', playerId: el.dataset.p || null });
+    if(m.settings.assists && el.dataset.p){ render(false); openAssistPicker(curMatch(), eid, el.dataset.p); return; }
+    afterEvent(eid);
+  },
+  blockSub(){ openBlockSub(new Set(), new Set()); },
+  blockToggle(el){
+    const ctx = sheetCtx; if(!ctx) return;
+    const set = el.dataset.k === 'out' ? ctx.outs : ctx.ins;
+    if(set.has(el.dataset.id)) set.delete(el.dataset.id); else set.add(el.dataset.id);
+    openBlockSub(ctx.outs, ctx.ins);
+  },
+  blockDo(){
+    const ctx = sheetCtx; if(!ctx || !ctx.outs.size || ctx.outs.size !== ctx.ins.size) return;
+    const m = curMatch(), st = derive(m, Clock.game(m.clock, Date.now()));
+    const pl = id => st.stats[id] ? st.stats[id].played : 0;
+    // Laengste Spielzeit raus gegen kuerzeste rein - paarweise
+    const outs = [...ctx.outs].sort((a, b) => pl(b) - pl(a)), ins = [...ctx.ins].sort((a, b) => pl(a) - pl(b));
+    outs.forEach((o, i) => addSub(m.id, 'own', o, ins[i]));
+    closeSheet(); render(false); toast(T().blockDone(outs.length));
+  },
+  theme(el){
+    THEME = el && el.dataset.v ? el.dataset.v : (THEME === 'light' ? 'dark' : 'light');
+    try { localStorage.setItem('pp_theme', THEME); } catch(e){}
+    applyTheme();
+    if(sheetOpen() && el && el.dataset.v) A.settings(); else render(false);
   },
   ackReminder(){ patchMatch(cur().id, x => Object.assign({}, x, { reminderAckMs: Clock.game(x.clock, Date.now()) })); render(false); },
   doSuggest(el){ addSub(cur().id, 'own', el.dataset.o, el.dataset.i); render(false); },
@@ -2221,15 +2995,15 @@ const A = {
       const eid = pushEvent(m.id, { type: 'goal', side: ds.side, kind: ds.kind, playerId: ds.p || null });
       // Vorlage gleich abfragen (eigenes Tor aus dem Spiel heraus, Option im Spiel aktiv)
       if(m.settings.assists && ds.side === 'own' && ds.kind === 'normal'){ render(false); openAssistPicker(curMatch(), eid, ds.p); return; }
+      afterEvent(eid); return;
     } else {
       let card = ds.card;
       // Zweite Gelbe fuer denselben Spieler = Gelb-Rot (Regelwerk)
       if(card === 'yellow' && ds.p && m.events.some(e => e.type === 'card' && e.card === 'yellow' && e.playerId === ds.p)){
         card = 'yellowRed'; toast(T().secondYellow);
       }
-      pushEvent(m.id, { type: 'card', side: ds.side, card, playerId: ds.p || null });
+      afterEvent(pushEvent(m.id, { type: 'card', side: ds.side, card, playerId: ds.p || null }));
     }
-    closeSheet(); render(false);
   },
   subPick(el){
     const t = T(), m = curMatch(), id = el.dataset.p, out = el.dataset.mode === 'out';
@@ -2240,7 +3014,7 @@ const A = {
       choices.length ? choices.map(c => act('subDo', pLabel(findP(m, c)), t.played(Math.floor(st.stats[c].played / 60000) + ' min'), '',
         ' data-o="' + (out ? id : c) + '" data-i="' + (out ? c : id) + '"')).join('') : '<div class="empty">' + esc(t.noneAvail) + '</div>');
   },
-  subDo(el){ addSub(cur().id, 'own', el.dataset.o || null, el.dataset.i); closeSheet(); render(false); },
+  subDo(el){ afterEvent(addSub(cur().id, 'own', el.dataset.o || null, el.dataset.i)); },
   setKeeper(el){ pushEvent(cur().id, { type: 'keeper', side: 'own', playerId: el.dataset.p }); closeSheet(); render(false); },
   opp(el){
     const t = T(), m = curMatch(), pid = el.dataset.id || '';
@@ -2260,7 +3034,7 @@ const A = {
     openSheet(t.whoFor(pShort(findP(m, id))), '', m.oppPlayers.filter(p => p.id !== id).sort(byNumber)
       .map(p => act('oppSubDo', pLabel(p), '', '', ' data-o="' + id + '" data-i="' + p.id + '"')).join(''));
   },
-  oppSubDo(el){ addSub(cur().id, 'opp', el.dataset.o, el.dataset.i); closeSheet(); render(false); },
+  oppSubDo(el){ afterEvent(addSub(cur().id, 'opp', el.dataset.o, el.dataset.i)); },
   event(el){
     const t = T(), m = curMatch(), e = m.events.find(x => x.id === el.dataset.id);
     if(!e) return;
@@ -2268,7 +3042,7 @@ const A = {
   },
   setAssist(el){
     patchEvent(cur().id, el.dataset.e, e => Object.assign(e, { assistId: el.dataset.p || null }));
-    closeSheet(); render(false);
+    afterEvent(el.dataset.e);
   },
   editMin(el){
     const id = sheetCtx && sheetCtx.eventId; if(!id) return;
@@ -2317,7 +3091,7 @@ const A = {
   delEvent(el){ patchMatch(cur().id, x => Object.assign({}, x, { events: x.events.filter(e => e.id !== el.dataset.id) })); closeSheet(); render(false); },
   clockFix(){
     const t = T(), m = curMatch();
-    if(m.clock.status === 'pre') return;
+    if(m.clock.status === 'pre' || m.manual) return;
     const can = m.clock.status === 'running' || m.clock.status === 'paused';
     openSheet(t.clockFix, can ? t.clockFixSub : '', can ? '<div class="row2">' + [-60000, -10000, 10000, 60000].map(ms =>
       '<button class="btn soft" data-act="adjust" data-ms="' + ms + '">' + (ms > 0 ? '+' : '−') + (Math.abs(ms) >= 60000 ? '1 min' : '10 s') + '</button>').join('') + '</div>' +
@@ -2416,6 +3190,15 @@ function previewList(){
   b.disabled = !list.length; b.textContent = list.length ? T().takeN(list.length) : T().noneFound;
 }
 
+function importBackup(data){
+  const teams = (Array.isArray(data.teams) ? data.teams : []).map(cleanTeam).filter(Boolean);
+  const matches = (Array.isArray(data.matches) ? data.matches : []).map(cleanMatch).filter(Boolean);
+  let nt = 0, nm = 0;
+  teams.forEach(t => { if(!DB.teams.some(x => x.id === t.id)){ DB.teams.push(t); nt++; } });
+  matches.forEach(m => { if(!DB.matches.some(x => x.id === m.id)){ DB.matches.push(m); nm++; } });
+  DB.matches.sort((a, b) => matchDate(b) - matchDate(a));
+  save(); render(false); toast(T().backupImported(nt, nm));
+}
 function importSquads(data){
   const t = T();
   const list = teamsFromSquadFile(data);
@@ -2457,6 +3240,7 @@ document.addEventListener('input', e => {
     if(btn) btn.disabled = !ok;
     document.querySelectorAll('.chip.opp.on').forEach(c => c.classList.remove('on'));
   }
+  if(e.target.id === 'past-date' && r.v === 'new'){ r.date = e.target.value; }
   if(e.target.id === 'notes' && r.v === 'live'){
     // ohne Neuaufbau speichern, damit der Cursor bleibt
     const m = matchById(r.id); if(m){ m.notes = e.target.value.slice(0, 5000); save(); }
@@ -2472,6 +3256,7 @@ document.addEventListener('keydown', e => {
   if(e.target.id === 'p-name'){ e.preventDefault(); A.addPlayer(); }
   if(e.target.id === 'new-team'){ e.preventDefault(); A.createTeam(); }
   if(e.target.id === 'l-name'){ e.preventDefault(); A.addLateDo(); }
+  if(e.target.id === 'ev-min'){ e.preventDefault(); A.setMin(); }
 });
 
 /* Cordova: Android-Zuruecktaste */
@@ -2490,6 +3275,7 @@ if('serviceWorker' in navigator && location.protocol === 'https:' && location.ho
 }
 
 render(true);
+if(!onbDone() && !DB.teams.length && !DB.matches.length){ ONB = 0; renderOnb(); }
 </script>
 </body>
 </html>

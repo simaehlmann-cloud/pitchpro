@@ -7,8 +7,9 @@ Cordova-Builds über GitHub Actions für Google Play und den App Store, Deutsch/
 
 - **Mehrere Mannschaften** – jede als „Mein Team“ anlegen, oben auf der Startseite wechseln.
   Neues Spiel, Spielliste und Statistik beziehen sich auf die gewählte Mannschaft.
-- **Teams & Kader** – Spieler einzeln, als eingefügte Liste (DFBnet, Excel, WhatsApp) oder als
-  **Kader-Datei aus TacticBoard**.
+- **Teams & Kader** – Spieler einzeln, als eingefügte Liste (DFBnet, Excel, WhatsApp) oder per
+  **„📥 Kader importieren“**: Kader-Datei (z. B. aus TacticBoard), CSV-Tabelle (Spalten wie Nr, Vorname,
+  Nachname, Name, Position/TW werden erkannt; Trennzeichen `;` `,` oder Tab) oder Textliste.
 - **Spieltag einfügen** – der geteilte Spieltag aus dem Kaderplaner (derselbe Text, den TacticBoard
   versteht) legt das Spiel direkt an: Team, Gegner, Heim/Auswärts, wer dabei ist, Torwart.
 - **Spiel anlegen** – Format frei einstellbar (Vorlagen 5er bis 11er), Aufstellung per Tipp
@@ -17,20 +18,32 @@ Cordova-Builds über GitHub Actions für Google Play und den App Store, Deutsch/
   Nachspielzeit, Uhr-Korrektur. Spieler antippen → Tor, Elfmeter, Eigentor, Gelb, Gelb-Rot, Rot,
   Wechsel. Gegner: Tipp auf den Vereinsnamen genügt, mit Kader auch pro Spieler. Spieler nachtragen.
   Verlauf mit Löschen – Spielstand und Spielzeiten rechnen sich neu.
-- **Ereignisse bearbeiten** – Minute, Spieler, Elfmeter, Vorlage, Kartenart nachträglich ändern.
+- **Schnellleiste** unter der Uhr: „⚽ Tor“ (Torschütze wählen oder später eintragen) und „↶ Rückgängig“.
+- **Block-Wechsel** – mehrere Spieler auf einmal wechseln.
+- **Feldansicht** – Spieler auf dem Platz als Aufstellung (Reihen aus den TacticBoard-Rollen, sonst nach Nummer).
+- **Hell-Modus** für pralle Sonne (☀︎ im Live-Spiel oder unter ⚙︎).
+- **Ereignisse bearbeiten** – Minute (direkt eintippen oder ±), Spieler, Elfmeter, Vorlage, Kartenart nachträglich ändern.
+- **Spiel nachtragen** – vergangenes Spiel ohne Uhr: Datum, Aufstellung, dann Tore, Karten und Wechsel mit Minute.
+  Abgeschlossene Spiele lassen sich im Bericht über „✎ Spiel bearbeiten“ ergänzen.
 - **Vorlagen** (Option je Spiel) – nach jedem eigenen Tor kurze Abfrage, auch in der Statistik.
 - **Notizen** pro Spiel mit Minuten-Stempel; im Bericht wählbar, ob sie mitgeteilt werden.
 - **Verlängerung und Elfmeterschießen** bei Gleichstand nach Abpfiff (Bilanz zählt den Sieger i. E.).
 - **Wechselerinnerung** – feste Intervalle *und* „Faire Spielzeit“ (Spielzeit je Spieler,
   konkrete Wechselvorschläge, Torwart ausgenommen). Fällige Wechsel: Hinweis, Vibration, Signalton.
+  Optional **Wechselplan** vor dem Spiel (faire Rotation als Vorschlag, je Wechsel änderbar); die Erinnerung
+  zeigt dann z. B. „Ben und Mia für Finn und Emma“ mit „Plan ausführen“ / „Überspringen“.
   Der Bildschirm bleibt an, solange die Uhr läuft (Plugin `cordova-plugin-insomnia`). Bei gesperrtem
   Display oder in einer anderen App kommt eine Benachrichtigung (`cordova-plugin-local-notification`;
   auf Android ohne Sonderrecht für exakte Wecker, daher im Energiesparmodus evtl. etwas verzögert).
-- **Spielbericht** – Ergebnis, Halbzeitstand, Torfolge, Karten, Wechsel, Spielzeiten; als Text teilen.
+- **Spielbericht** – Ergebnis, Halbzeitstand, Torfolge, Karten, Wechsel, Spielzeiten; als Text teilen
+  oder **als Bild** (Ergebnis-Grafik 1080 px für WhatsApp & Co.).
 - **Statistik** – über alle abgeschlossenen Spiele eines Teams: Bilanz (gesamt, Heim, Auswärts),
   pro Spieler Einsätze, Startelf, Minuten, Ø Minuten, Anteil an der Spielzeit, Tore (Elfmeter),
   Eigentore, Karten. Zeitraum Saison / Hinrunde / Rückrunde / Gesamt (Saison ab 1. Juli),
-  sortierbar, als Text teilbar oder als CSV-Tabelle exportierbar.
+  sortierbar, als Text teilbar oder als CSV-Tabelle exportierbar. **Spielerprofil** (Spieler antippen: alle Spiele
+  mit Minuten, Toren, Karten) und **Direktvergleich** (Bilanz gegen jeden Gegner, auch als Hinweis beim Anlegen).
+- **Einführung** beim ersten Start (3 Schritte, mit Sprachwahl), erneut aufrufbar unter „Über PitchPro“.
+- **Sprache** – Flaggen oben auf der Startseite (Deutsch/Englisch).
 - **Über PitchPro** (ⓘ oben rechts) – Erklärung der App und Tipps.
 - **Zurück-Taste (Android)** – schließt Fenster und geht zurück, beendet die App aber nie.
 - **Sicherung** – alle Teams und Spiele als Datei exportieren/importieren (⚙︎). Ab 3 neuen Spielen und
@@ -40,9 +53,9 @@ Cordova-Builds über GitHub Actions für Google Play und den App Store, Deutsch/
 
 | Richtung | Weg | Inhalt |
 |---|---|---|
-| TacticBoard → PitchPro | 👥 Kader → „📤 Kader exportieren“, in PitchPro *Teams & Kader → 📥 Kader aus TacticBoard* | Namen, Rückennummern, Torwart (Rolle `tw`), „dabei“-Haken, Spielform |
+| TacticBoard → PitchPro | 👥 Kader → „📤 Kader exportieren“, in PitchPro *Teams & Kader → 📥 Kader importieren* | Namen, Rückennummern, Torwart (Rolle `tw`), „dabei“-Haken, Spielform |
 | Kaderplaner → beide | Geteilten Spieltag einfügen | Team, Gegner, Heim/Auswärts, Kader, (TW) |
-| PitchPro → TacticBoard | Team öffnen → „📤 Kader für TacticBoard“, in TacticBoard „📥 Kader importieren“ | wie oben; Rollen (Abwehr/Mittelfeld/Sturm), Kapitän und Formation aus TacticBoard bleiben erhalten |
+| PitchPro → TacticBoard | Team öffnen → „📤 Kader exportieren“, in TacticBoard „📥 Kader importieren“ | wie oben; Rollen (Abwehr/Mittelfeld/Sturm), Kapitän und Formation aus TacticBoard bleiben erhalten |
 
 Beim Anpfiff setzt PitchPro die „dabei“-Haken auf die Spieler dieses Spiels – exportiert man danach,
 stehen in TacticBoard genau diese Spieler zur Aufstellung bereit.
