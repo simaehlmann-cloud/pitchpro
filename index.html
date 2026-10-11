@@ -37,6 +37,10 @@ button { font:inherit; color:inherit; border:0; background:none; cursor:pointer;
 #top button { min-width:44px; height:44px; padding:0 10px; border-radius:10px; font-size:16px; font-weight:700; }
 #top button:active { background:#222; }
 #back { font-size:26px !important; }
+.brand { display:inline-flex; align-items:center; gap:12px; }
+.brand img { border-radius:10px; flex:0 0 38px; box-shadow:0 2px 8px rgba(0,0,0,.4); }
+.brand span { font-size:28px; font-weight:900; letter-spacing:.3px; }
+#top button#right, #top button#right2 { font-size:22px; }
 #back[hidden], #right[hidden], #right2[hidden] { display:none; }
 
 #view { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:16px 16px calc(var(--safe-b) + 90px); }
@@ -242,6 +246,12 @@ input.nr { width:68px; flex:0 0 68px; text-align:center; }
 <div id="sheet" role="dialog" aria-modal="true"></div>
 <div id="toast"></div>
 <input type="file" id="file-in" accept=".json,application/json,text/plain" style="display:none" />
+
+<!-- Wird nur in den App-Builds (Android und iOS) von Cordova bereitgestellt.
+     Ohne diese Datei gibt es kein "deviceready": keine Zurueck-Taste, keine
+     Plugins (Teilen, Bildschirm an, Benachrichtigung). In der Web-Fassung
+     fehlt sie - das ist ohne Folgen. -->
+<script src="cordova.js"></script>
 
 <script>
 'use strict';
@@ -1339,8 +1349,11 @@ function askConfirm(title, text, okLabel, fn){
 /* ---------------------------------------------------------------------
    ANSICHTEN
 --------------------------------------------------------------------- */
-function setTop(title, right, right2){
-  $('title').textContent = title;
+function setTop(title, right, right2, brand){
+  const tt = $('title');
+  if(brand){
+    tt.innerHTML = '<span class="brand"><img src="image.png" alt="" width="38" height="38" /><span>' + esc(title) + '</span></span>';
+  } else tt.textContent = title;
   $('back').hidden = STACK.length <= 1;
   [['right', right], ['right2', right2]].forEach(([id, b]) => {
     const r = $(id);
@@ -1394,7 +1407,7 @@ function backupDue(now){
 /* ----- Start ----- */
 function viewHome(){
   const t = T();
-  setTop(t.appName, { label: '⚙︎', act: 'settings', aria: t.settings }, { label: 'ⓘ', act: 'goAbout', aria: t.aboutTitle });
+  setTop(t.appName, { label: '⚙︎', act: 'settings', aria: t.settings }, { label: 'ⓘ', act: 'goAbout', aria: t.aboutTitle }, true);
   const own = DB.teams.filter(x => x.isOwn);
   const act = activeTeam();
   // Bei mehreren Mannschaften nur die Spiele der gewaehlten zeigen
@@ -1416,7 +1429,7 @@ function viewHome(){
                 : '<button class="btn lg" data-act="goTeams">' + esc(t.firstTeam) + '</button>') +
     '<div class="row2" style="margin-top:8px"><button class="btn soft" data-act="pasteMatchday">' + esc(t.pasteMatchday) + '</button>' +
     '<button class="btn soft" data-act="goTeams">' + esc(t.teamsBtn) + '</button></div>' +
-    (act && DB.matches.some(m => m.clock.status === 'finished' && m.ownTeamId === act.id) ? '<button class="btn soft" data-act="goStats" style="margin-top:8px">' + esc(t.statsBtn) + '</button>' : '') + '</div>';
+    (act ? '<button class="btn soft" data-act="goStats" style="margin-top:8px">' + esc(t.statsBtn) + '</button>' : '') + '</div>';
   const bk = backupDue();
   if(bk) h += '<div class="due" style="border-color:var(--line);background:var(--surface)"><h3 style="color:var(--text);font-size:17px">' + esc(t.backupDueTitle) + '</h3>' +
     '<div class="hint" style="margin:0 0 10px;font-size:14px">' + esc(bk.never ? t.backupNever(bk.n) : t.backupAgo(bk.days, bk.n)) + '</div>' +
