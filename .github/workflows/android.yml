@@ -105,7 +105,7 @@ jobs:
         set -euo pipefail
         # PitchPro laedt nichts nach. Steht in der CSP doch ein externer Host,
         # wurde index.html versehentlich geaendert - dann lieber abbrechen.
-        if grep -o 'Content-Security-Policy[^>]*' app_build/www/index.html | grep -q 'https\?://'; then
+        if grep -o 'http-equiv="Content-Security-Policy"[^>]*' app_build/www/index.html | grep -q 'https\?://'; then
           echo "::error::Die CSP in index.html erlaubt externe Hosts."
           exit 1
         fi

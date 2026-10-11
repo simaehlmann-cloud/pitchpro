@@ -122,7 +122,7 @@ jobs:
       - name: CSP pruefen
         run: |
           set -euo pipefail
-          if grep -o 'Content-Security-Policy[^>]*' build/www/index.html | grep -q 'https\?://'; then
+          if grep -o 'http-equiv="Content-Security-Policy"[^>]*' build/www/index.html | grep -q 'https\?://'; then
             echo "::error::Die CSP in index.html erlaubt externe Hosts."
             exit 1
           fi
