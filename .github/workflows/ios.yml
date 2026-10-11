@@ -52,6 +52,10 @@ jobs:
       # der Android-Build unberuehrt.
       PLUGIN_TEILEN: 'cordova-plugin-x-socialsharing@6.0.4'
       PLUGIN_STATUSLEISTE: 'cordova-plugin-statusbar@4.0.0'
+      # Bildschirm anlassen, solange die Spieluhr laeuft (idleTimerDisabled)
+      PLUGIN_WACH: 'cordova-plugin-insomnia@4.3.0'
+      # Wechselerinnerung als Benachrichtigung, wenn das Display aus ist
+      PLUGIN_ERINNERUNG: 'cordova-plugin-local-notification@1.2.3'
 
     steps:
       - name: Repository auschecken
@@ -131,6 +135,8 @@ jobs:
           cordova platform add "ios@${CORDOVA_IOS}" --no-telemetry
           cordova plugin add "$PLUGIN_TEILEN" --no-telemetry
           cordova plugin add "$PLUGIN_STATUSLEISTE" --no-telemetry
+          cordova plugin add "$PLUGIN_WACH" --no-telemetry
+          cordova plugin add "$PLUGIN_ERINNERUNG" --no-telemetry
           # Das eigene Teilen-Plugin (plugins/cordova-plugin-tb-share) ist
           # reines Android und wird hier bewusst nicht eingebunden.
           cordova plugin ls
