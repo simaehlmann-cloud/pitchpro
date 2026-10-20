@@ -57,7 +57,7 @@ Play Store, App Store – ist das ohne jede Wirkung.
 
 | Nachricht | Richtung | Inhalt |
 |---|---|---|
-| `kp:start-match` | Kaderplaner → PitchPro | Spieltag-ID, Team, Gegner, Heim/Auswärts, Spieler auf dem Feld, Kader mit Kaderplaner-IDs |
+| `kp:start-match` | Kaderplaner → PitchPro | Spieltag-ID, Team, Gegner, Heim/Auswärts, Spieler auf dem Feld, Kader mit Kaderplaner-IDs; bei `past: true` öffnet „Spiel nachtragen“ mit dem Datum des Spieltags |
 | `kp:back` / `pp:back` | ↔ | Android-Zurück-Taste; Antwort `handled: true/false` |
 | `kp:resync` | Kaderplaner → PitchPro | alle Ergebnisse erneut senden |
 | `pp:ready` | PitchPro → Kaderplaner | Rahmen ist bereit |
