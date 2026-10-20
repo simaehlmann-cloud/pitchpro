@@ -49,6 +49,28 @@ Cordova-Builds über GitHub Actions für Google Play und den App Store, Deutsch/
 - **Sicherung** – alle Teams und Spiele als Datei exportieren/importieren (⚙︎). Ab 3 neuen Spielen und
   30 Tagen ohne Sicherung erinnert die Startseite daran.
 
+## Eingebettet im U11-Kaderplaner
+
+Liegt PitchPro im Unterordner `pitch/` des Kaderplaners und läuft dort in einem Rahmen (iframe),
+tauschen beide Apps Nachrichten aus (`postMessage`, nur gleicher Ursprung). Eigenständig – Web,
+Play Store, App Store – ist das ohne jede Wirkung.
+
+| Nachricht | Richtung | Inhalt |
+|---|---|---|
+| `kp:start-match` | Kaderplaner → PitchPro | Spieltag-ID, Team, Gegner, Heim/Auswärts, Spieler auf dem Feld, Kader mit Kaderplaner-IDs |
+| `kp:back` / `pp:back` | ↔ | Android-Zurück-Taste; Antwort `handled: true/false` |
+| `kp:resync` | Kaderplaner → PitchPro | alle Ergebnisse erneut senden |
+| `pp:ready` | PitchPro → Kaderplaner | Rahmen ist bereit |
+| `pp:result` | PitchPro → Kaderplaner | Ergebnis und je Spieler (nur ID): Minuten, Startelf, Tore – auch nach späterem Bearbeiten |
+| `pp:clock` | PitchPro → Kaderplaner | Uhr läuft → Bildschirm anlassen |
+| `pp:reminder` | PitchPro → Kaderplaner | Zeitpunkt der nächsten Wechselerinnerung (oder `null`) für eine Benachrichtigung |
+| `kp:caps` | Kaderplaner → PitchPro | `share: true`, wenn der Rahmen nativ teilen kann (Android-App) |
+| `pp:share` | PitchPro → Kaderplaner | Spielbericht/Statistik als Text teilen |
+
+Alle Nachrichten tragen `src` (`kaderplaner`/`pitchpro`) und `v: 1`. Das Ergebnis enthält keine
+Namen, nur Kaderplaner-IDs. Ein zweites `kp:start-match` mit derselben Spieltag-ID öffnet das
+vorhandene Spiel statt ein neues anzulegen.
+
 ## Zusammenspiel mit TacticBoard
 
 | Richtung | Weg | Inhalt |

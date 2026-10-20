@@ -7,7 +7,7 @@
  *   - Uebrige Assets (Icons, datenschutz.html): CACHE FIRST,
  *     da sie sich praktisch nie aendern und offline sofort da sein muessen.
  */
-const CACHE_NAME = 'pitchpro-v1.0';
+const CACHE_NAME = 'pitchpro-v1.1';
 const SHELL = './index.html';
 const ASSETS = [
   './',
@@ -31,9 +31,12 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('activate', event => {
+  // Nur EIGENE alte Caches loeschen: Cache Storage gilt fuer den ganzen Ursprung.
+  // Laeuft die App eingebettet (Kaderplaner + Taktiktafel + PitchPro auf einer
+  // Seite), wuerde sonst jede Aktualisierung die Offline-Daten der anderen loeschen.
   event.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys.map(key => key !== CACHE_NAME ? caches.delete(key) : null)))
+      .then(keys => Promise.all(keys.map(key => key !== CACHE_NAME && key.indexOf('pitchpro-') === 0 ? caches.delete(key) : null)))
       .then(() => self.clients.claim())
   );
 });

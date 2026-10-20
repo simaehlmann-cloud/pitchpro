@@ -747,6 +747,13 @@ function vibrate(p){ try { if(navigator.vibrate) navigator.vibrate(p); } catch(e
    DATEN (localStorage)
 --------------------------------------------------------------------- */
 const DATA_KEY = 'pitchpro_data';
+/* Einbettung im Kaderplaner (Details im Abschnitt EINBETTUNG weiter unten).
+   Hier oben, weil save() die Bruecke schon beim Laden erreichen kann. */
+const EMBEDDED = (() => { try { return window.parent !== window; } catch(e){ return true; } })();
+const BRIDGE_ORIGIN = location.origin && location.origin !== 'null' ? location.origin : null;
+let bridgeLastClock = null, bridgeLastReminder = '';
+const bridgeSent = {};   // matchId -> zuletzt gesendeter Stand (JSON)
+const bridgeCaps = { share: false };   // was der Kaderplaner nativ kann (kp:caps)
 const APP_VERSION = '1.0.0';   // gleich halten mit version="..." in config.xml
 const DEFAULT_SETTINGS = { periods: 2, periodMinutes: 25, playersOnField: 7, subIntervalMinutes: 0, fairPlay: false, assists: false };
 
@@ -816,6 +823,7 @@ function cleanMatch(m){
     })(),
     events: evs, reminderAckMs: num(m.reminderAckMs, 0, 1e9, 0),
     manual: m.manual === true,
+    kp: cleanKp(m.kp, known),
     plan: (() => {
       if(!Array.isArray(m.plan)) return null;
       const out = m.plan.slice(0, 30).map(x => {
@@ -832,6 +840,18 @@ function cleanMatch(m){
     })()
   };
 }
+/* Verknuepfung mit dem Kaderplaner: Spieltag-ID und Spieler-Zuordnung
+   (PitchPro-ID -> Kaderplaner-ID). Nur IDs, keine Namen. */
+const KP_ID = /^[A-Za-z0-9_.:-]{1,64}$/;   // gleich wie ID_RE im Kaderplaner
+function cleanKp(k, known){
+  if(!k || typeof k !== 'object' || typeof k.matchId !== 'string' || !KP_ID.test(k.matchId)) return null;
+  const ids = {};
+  if(k.ids && typeof k.ids === 'object') Object.keys(k.ids).slice(0, 60).forEach(pp => {
+    const v = k.ids[pp];
+    if((!known || known.has(pp)) && typeof v === 'string' && KP_ID.test(v)) ids[pp] = v;
+  });
+  return { matchId: k.matchId, ids };
+}
 function load(){
   let raw = null;
   try { raw = JSON.parse(localStorage.getItem(DATA_KEY) || 'null'); } catch(e){ raw = null; }
@@ -847,8 +867,10 @@ function load(){
 }
 let DB = load();
 function save(){
-  try { localStorage.setItem(DATA_KEY, JSON.stringify(DB)); return true; }
+  try { localStorage.setItem(DATA_KEY, JSON.stringify(DB)); }
   catch(e){ toast(T().saveFailed); return false; }
+  try { bridgeAfterSave(); } catch(e){}
+  return true;
 }
 const teamById = id => DB.teams.find(t => t.id === id);
 /* Mannschaft, mit der gerade gearbeitet wird (Startseite, neues Spiel, Statistik) */
@@ -1585,6 +1607,8 @@ function iPadAnchor(){
   return Math.max(0, Math.round(window.innerWidth / 2)) + ',' + Math.max(0, Math.round(window.innerHeight * 0.66)) + ',0,0';
 }
 async function shareText(text, title){
+  // Eingebettet in der Kaderplaner-App: der Rahmen teilt nativ
+  if(EMBEDDED && bridgeCaps.share){ bridgeSend('pp:share', { text: String(text).slice(0, 20000), title: String(title || '').slice(0, 100) }); return; }
   if(window.TbShare && window.TbShare.shareText){
     try { await window.TbShare.shareText(text, title || ''); return; } catch(e){}
   }
@@ -2468,6 +2492,7 @@ function renderOnb(){
 let wakeLock = null, lastDue = false;
 let awakeNative = null;
 async function keepAwake(on){
+  bridgeClock(on);
   const ins = window.plugins && window.plugins.insomnia;
   if(ins){
     // Cordova-Plugin: zuverlaessig auf Android und iOS
@@ -2552,7 +2577,7 @@ function notifyApi(){
 }
 function syncNotification(now){
   const ln = notifyApi();
-  if(!ln) return;
+  if(!ln){ bridgeReminder(now); return; }
   const m = DB.matches.find(x => x.clock.status === 'running');
   let at = null;
   if(m){
@@ -2582,6 +2607,40 @@ function syncNotification(now){
 setInterval(() => tick(false), 500);
 setInterval(() => syncNotification(Date.now()), 1000);
 document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible'){ wakeLock = null; tick(false); } });
+
+/* Spieltag als Spiel vorbereiten - aus geteiltem Text oder vom eingebetteten
+   Kaderplaner. kp = { matchId, names: { name(klein) -> Kaderplaner-ID } } oder null */
+function prepareFromMatchday(md, kp){
+  const t = T();
+  const { team, created } = mergeTeam(md.team, md.players.map(p => ({ name: p.name, number: p.number, keeper: p.keeper })), true);
+  team.isOwn = true;
+  DB.activeTeamId = team.id;
+  save();
+  const d = newDraft({ ownId: team.id, oppName: md.opponent || '', isHome: md.home !== false, note: t.fromMatchday });
+  if(md.onField) d.settings.playersOnField = md.onField;   // Spielform vom Kaderplaner (z. B. 4+1 -> 5)
+  const opp = md.opponent && DB.teams.find(x => !x.isOwn && x.name.toLowerCase() === md.opponent.toLowerCase());
+  if(opp) d.oppId = opp.id;
+  const byName = n => team.players.find(p => p.name.toLowerCase() === n.toLowerCase());
+  team.players.forEach(p => { d.roles[p.id] = 'absent'; });
+  md.players.forEach(mp => {
+    const p = byName(mp.name); if(!p) return;
+    d.roles[p.id] = mp.role === 'start' ? 'start' : 'bench';
+    if(mp.keeper) d.keeperId = p.id;
+  });
+  // Ohne Startelf-Abschnitt: passt der Kader aufs Feld, starten alle
+  const present = md.players.length;
+  if(!md.hasLineup && present <= d.settings.playersOnField) md.players.forEach(mp => { const p = byName(mp.name); if(p) d.roles[p.id] = 'start'; });
+  // Ohne Aufstellung steht zumindest der Torwart schon in der Startelf
+  if(!md.hasLineup && d.keeperId) d.roles[d.keeperId] = 'start';
+  if(d.keeperId && d.roles[d.keeperId] !== 'start') d.keeperId = null;
+  if(kp){
+    const ids = {};
+    team.players.forEach(p => { const k = kp.names[p.name.toLowerCase()]; if(k && d.roles[p.id] !== 'absent') ids[p.id] = k; });
+    d.kp = { matchId: kp.matchId, ids };
+  }
+  if(created) toast(t.matchdayTeamNew(team.name));
+  go(d);
+}
 
 /* ---------------------------------------------------------------------
    AKTIONEN (Ereignis-Delegation ueber data-act)
@@ -2742,32 +2801,9 @@ const A = {
     try { const txt = await navigator.clipboard.readText(); const ta = $(el.dataset.target); ta.value = txt; ta.dispatchEvent(new Event('input')); } catch(e){}
   },
   applyMatchday(){
-    const t = T();
     const days = parseMatchday($('md-text').value);
-    if(!days.length){ toast(t.matchdayNone); return; }
-    const md = days[0];
-    const { team, created } = mergeTeam(md.team, md.players.map(p => ({ name: p.name, number: p.number, keeper: p.keeper })), true);
-    team.isOwn = true;
-    DB.activeTeamId = team.id;
-    save();
-    const d = newDraft({ ownId: team.id, oppName: md.opponent || '', isHome: md.home !== false, note: t.fromMatchday });
-    const opp = md.opponent && DB.teams.find(x => !x.isOwn && x.name.toLowerCase() === md.opponent.toLowerCase());
-    if(opp) d.oppId = opp.id;
-    const byName = n => team.players.find(p => p.name.toLowerCase() === n.toLowerCase());
-    team.players.forEach(p => { d.roles[p.id] = 'absent'; });
-    md.players.forEach(mp => {
-      const p = byName(mp.name); if(!p) return;
-      d.roles[p.id] = mp.role === 'start' ? 'start' : 'bench';
-      if(mp.keeper) d.keeperId = p.id;
-    });
-    // Ohne Startelf-Abschnitt: passt der Kader aufs Feld, starten alle
-    const present = md.players.length;
-    if(!md.hasLineup && present <= d.settings.playersOnField) md.players.forEach(mp => { const p = byName(mp.name); if(p) d.roles[p.id] = 'start'; });
-    // Ohne Aufstellung steht zumindest der Torwart schon in der Startelf
-    if(!md.hasLineup && d.keeperId) d.roles[d.keeperId] = 'start';
-    if(d.keeperId && d.roles[d.keeperId] !== 'start') d.keeperId = null;
-    if(created) toast(t.matchdayTeamNew(team.name));
-    go(d);
+    if(!days.length){ toast(T().matchdayNone); return; }
+    prepareFromMatchday(days[0], null);
   },
 
   /* Teams */
@@ -2912,6 +2948,10 @@ const A = {
       startingIds: team.players.filter(p => role(d, p.id) === 'start').map(p => p.id),
       keeperId: d.keeperId, settings: Object.assign({}, d.settings), clock: Clock.fresh(), events: [], reminderAckMs: 0
     };
+    if(d.kp && !d.past){
+      const kp = cleanKp(d.kp, new Set(players.map(p => p.id)));
+      if(kp) m.kp = kp;
+    }
     if(d.past){
       // Nachgetragenes Spiel: abgeschlossen, volle Spielzeit, ohne Erinnerung
       const s = m.settings;
@@ -3305,6 +3345,115 @@ document.addEventListener('keydown', e => {
   if(e.target.id === 'ev-min'){ e.preventDefault(); A.setMin(); }
 });
 
+/* ---------------------------------------------------------------------
+   EINBETTUNG IM KADERPLANER
+   Laeuft PitchPro in einem Rahmen (iframe) des Kaderplaners, tauschen beide
+   Nachrichten ueber postMessage aus. Nur derselbe Ursprung (gleiche Seite
+   bzw. dieselbe App) wird angenommen. Eigenstaendig (Web, Play Store) ist
+   der ganze Block wirkungslos.
+
+   Kaderplaner -> PitchPro
+     kp:start-match { matchId, team, date, opponent, home, onField?, players:[{ id, name, number, keeper, role? }] }
+     kp:back        Android-Zuruecktaste; Antwort pp:back { handled }
+     kp:resync      alle Ergebnisse erneut senden
+     kp:caps        { share }  der Rahmen kann Text nativ teilen
+   PitchPro -> Kaderplaner
+     pp:ready
+     pp:result      { matchId, finishedAt, score:{own,opp}, oppOwnGoals, extra, shootout:{own,opp}|null,
+                      players:[{ id, minutes, started, goals }] }
+     pp:clock       { running }          Bildschirm anlassen ja/nein
+     pp:reminder    { at|null, title, text }   naechste Wechselerinnerung
+     pp:share       { text, title }      Text teilen (nur nach kp:caps share)
+--------------------------------------------------------------------- */
+function bridgeSend(type, payload){
+  if(!EMBEDDED || !BRIDGE_ORIGIN) return;
+  try { window.parent.postMessage(Object.assign({ src: 'pitchpro', v: 1, type }, payload || {}), BRIDGE_ORIGIN); } catch(e){}
+}
+function bridgeClock(on){
+  if(!EMBEDDED || bridgeLastClock === on) return;
+  bridgeLastClock = on; bridgeSend('pp:clock', { running: on });
+}
+function bridgeReminder(now){
+  if(!EMBEDDED) return;
+  const m = DB.matches.find(x => x.clock.status === 'running');
+  const rem = m ? msUntilReminder(m, now) : null;
+  const at = rem != null && rem > 2000 ? Math.round((now + rem) / 1000) * 1000 : null;
+  const key = at == null ? '' : m.id + '@' + at;
+  // kleine Schwankungen der Uhr nicht jedes Mal neu melden
+  if(key === bridgeLastReminder || (at != null && bridgeLastReminder.indexOf(m.id + '@') === 0 &&
+     Math.abs(+bridgeLastReminder.split('@')[1] - at) < 3000)) return;
+  if(at == null && rem != null && rem <= 2000) return;   // gleich faellig: geplante stehen lassen
+  bridgeLastReminder = key;
+  const t = T();
+  bridgeSend('pp:reminder', { at, title: t.subDue, text: m ? m.ownName + ' – ' + m.oppName + ': ' + t.notifyText : '' });
+}
+function matchResult(m){
+  const st = derive(m, m.clock.completedMs);
+  const so = m.shootout && m.shootout.length ? shootoutScore(m) : null;
+  const start = new Set(m.startingIds);
+  return {
+    matchId: m.kp.matchId, finishedAt: matchDate(m),
+    score: { own: st.score.own, opp: st.score.opp }, extra: !!m.extra,
+    // Eigentore des Gegners (zaehlen fuer uns) - im Kaderplaner eigene Kategorie
+    oppOwnGoals: m.events.filter(e => e.type === 'goal' && e.side === 'own' && e.kind === 'ownGoal').length,
+    shootout: so ? { own: so.own, opp: so.opp } : null,
+    players: m.ownPlayers.filter(p => m.kp.ids[p.id]).map(p => ({
+      id: m.kp.ids[p.id], minutes: Math.round(st.stats[p.id].played / 60000),
+      started: start.has(p.id), goals: st.stats[p.id].goals
+    }))
+  };
+}
+/* Nach jedem Speichern: abgeschlossene, verknuepfte Spiele melden - auch nach
+   spaeterem Bearbeiten im Bericht. Unveraenderte Staende werden nicht wiederholt. */
+function bridgeAfterSave(force){
+  if(!EMBEDDED) return;
+  DB.matches.forEach(m => {
+    if(!m.kp || m.clock.status !== 'finished') return;
+    let r; try { r = matchResult(m); } catch(e){ return; }
+    const j = JSON.stringify(r);
+    if(!force && bridgeSent[m.id] === j) return;
+    bridgeSent[m.id] = j;
+    bridgeSend('pp:result', { result: r });
+  });
+}
+const kpStr = (v, n) => typeof v === 'string' ? v.replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, n) : '';
+function startFromKaderplaner(d){
+  if(typeof d.matchId !== 'string' || !KP_ID.test(d.matchId) || !Array.isArray(d.players)) return;
+  // Gibt es das Spiel schon, wird es geoeffnet statt doppelt angelegt
+  const ex = DB.matches.find(m => m.kp && m.kp.matchId === d.matchId);
+  closeSheet();
+  if(ex){ STACK = [{ v: 'home' }, { v: ex.clock.status === 'finished' ? 'report' : 'live', id: ex.id }]; render(true); return; }
+  const names = {}, players = [];
+  d.players.slice(0, 40).forEach(p => {
+    if(!p || typeof p !== 'object') return;
+    const name = kpStr(p.name, 40), id = typeof p.id === 'string' && KP_ID.test(p.id) ? p.id : null;
+    if(!name || names[name.toLowerCase()]) return;
+    if(id) names[name.toLowerCase()] = id;
+    const n = Number(p.number);
+    players.push({ name, number: isFinite(n) && n >= 0 && n < 100 ? n : null, keeper: p.keeper === true,
+                   role: p.role === 'start' ? 'start' : p.role === 'bench' ? 'bench' : 'squad' });
+  });
+  const team = kpStr(d.team, 50);
+  if(!team || !players.length) return;
+  const of = Number(d.onField);
+  const md = { team, date: kpStr(d.date, 20), opponent: kpStr(d.opponent, 50), home: d.home !== false,
+               players, hasLineup: players.some(p => p.role !== 'squad'),
+               onField: isFinite(of) && of >= 1 && of <= 11 ? Math.round(of) : null };
+  STACK = [{ v: 'home' }];
+  prepareFromMatchday(md, { matchId: d.matchId, names });
+}
+if(EMBEDDED && BRIDGE_ORIGIN){
+  window.addEventListener('message', e => {
+    if(e.source !== window.parent || e.origin !== BRIDGE_ORIGIN) return;
+    const d = e.data;
+    if(!d || typeof d !== 'object' || d.src !== 'kaderplaner' || d.v !== 1) return;
+    if(d.type === 'kp:start-match') startFromKaderplaner(d);
+    else if(d.type === 'kp:back') bridgeSend('pp:back', { handled: back() });
+    else if(d.type === 'kp:caps') bridgeCaps.share = d.share === true;
+    else if(d.type === 'kp:resync'){ bridgeLastClock = null; bridgeLastReminder = '-'; bridgeAfterSave(true); tick(false); syncNotification(Date.now()); }
+  });
+}
+
 /* Cordova: Android-Zuruecktaste */
 document.addEventListener('deviceready', () => {
   document.addEventListener('backbutton', e => {
@@ -3321,7 +3470,9 @@ if('serviceWorker' in navigator && location.protocol === 'https:' && location.ho
 }
 
 render(true);
-if(!onbDone() && !DB.teams.length && !DB.matches.length){ ONB = 0; renderOnb(); }
+// Eingebettet keine Einfuehrung - der Kaderplaner liefert Team und Kader
+if(!EMBEDDED && !onbDone() && !DB.teams.length && !DB.matches.length){ ONB = 0; renderOnb(); }
+bridgeSend('pp:ready');
 </script>
 </body>
 </html>
