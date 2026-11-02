@@ -364,6 +364,9 @@ const I18N = {
     settings: 'Einstellungen', language: 'Sprache', backup: 'Sicherung',
     backupExport: '📤 Sicherung exportieren', backupImport: '📥 Sicherung importieren',
     backupHint: 'Alle Teams und Spiele als Datei – z. B. für ein neues Handy.',
+    resetBtn: '🗑 Alle Daten löschen', resetQ: 'Alle Daten löschen?', resetOk: 'Endgültig alles löschen',
+    resetText: (t, m) => t + (t === 1 ? ' Team' : ' Teams') + ' und ' + m + (m === 1 ? ' Spiel' : ' Spiele') + ' werden von diesem Gerät gelöscht, dazu alle Einstellungen. Danach startet PitchPro wie neu. Das lässt sich nicht rückgängig machen – vorher am besten eine Sicherung exportieren.',
+    resetBackupFirst: '📤 Erst Sicherung exportieren',
     backupDone: 'Sicherung erstellt.', backupImported: (t, m) => t + ' Teams und ' + m + ' Spiele übernommen.',
     privacy: 'Datenschutz', imprint: 'Impressum',
     teamsTitle: 'Teams & Kader', newTeam: 'Neues Team', teamPh: 'z. B. TSV Hagen E1', myTeam: 'Mein Team', opponent: 'Gegner',
@@ -549,6 +552,9 @@ const I18N = {
     settings: 'Settings', language: 'Language', backup: 'Backup',
     backupExport: '📤 Export backup', backupImport: '📥 Import backup',
     backupHint: 'All teams and matches as a file – e.g. for a new phone.',
+    resetBtn: '🗑 Delete all data', resetQ: 'Delete all data?', resetOk: 'Delete everything for good',
+    resetText: (t, m) => t + (t === 1 ? ' team' : ' teams') + ' and ' + m + (m === 1 ? ' match' : ' matches') + ' will be deleted from this device, along with all settings. PitchPro then starts like new. This cannot be undone – best export a backup first.',
+    resetBackupFirst: '📤 Export a backup first',
     backupDone: 'Backup created.', backupImported: (t, m) => t + ' teams and ' + m + ' matches imported.',
     privacy: 'Privacy policy', imprint: 'Imprint',
     teamsTitle: 'Teams & squads', newTeam: 'New team', teamPh: 'e.g. Hagen U11', myTeam: 'My team', opponent: 'Opponent',
@@ -1859,9 +1865,11 @@ function viewHome(){
       own.map(x => '<button class="chip' + (act && x.id === act.id ? ' on' : '') + '" data-act="pickTeam" data-id="' + x.id + '">' + esc(x.name) + '</button>').join('') +
       '</div>';
   }
+  // Mit eigenem Team steht dessen Name gross oben, "Spiel protokollieren" darunter
   h += '<div class="card" style="padding:20px">' +
-    (act && own.length > 1 ? '<div class="hint" style="margin:0 0 2px;font-weight:700;color:var(--green)">' + esc(act.name) + '</div>' : '') +
-    '<div style="font-size:26px;font-weight:900">' + esc(t.heroTitle) + '</div>' +
+    (act ? '<div style="font-size:28px;font-weight:900;line-height:1.15;overflow-wrap:anywhere">' + esc(act.name) + '</div>' +
+      '<div style="font-size:17px;font-weight:700;color:var(--green);margin-top:4px">' + esc(t.heroTitle) + '</div>'
+      : '<div style="font-size:26px;font-weight:900">' + esc(t.heroTitle) + '</div>') +
     '<div class="hint" style="font-size:15px;margin:6px 0 16px">' + esc(t.heroText) + '</div>' +
     (own.length ? '<button class="btn lg" data-act="newMatch">＋ ' + esc(t.newMatch) + '</button>'
                 : '<button class="btn lg" data-act="goTeams">' + esc(t.firstTeam) + '</button>') +
@@ -2698,7 +2706,8 @@ const A = {
       '<div class="hint">' + esc(t.backupHint) + '</div>' +
       '<button class="btn soft" data-act="goAbout" style="margin-top:16px">ⓘ ' + esc(t.aboutTitle) + '</button>' +
       '<div class="row2" style="margin-top:8px"><a class="btn ghost" style="text-decoration:none" href="' + (LANG === 'de' ? 'datenschutz.html' : 'datenschutz-en.html') + '">' + esc(t.privacy) + '</a>' +
-      '<a class="btn ghost" style="text-decoration:none" href="' + (LANG === 'de' ? 'impressum.html' : 'impressum-en.html') + '">' + esc(t.imprint) + '</a></div>');
+      '<a class="btn ghost" style="text-decoration:none" href="' + (LANG === 'de' ? 'impressum.html' : 'impressum-en.html') + '">' + esc(t.imprint) + '</a></div>' +
+      '<button class="btn ghost" data-act="resetAsk" style="margin-top:24px;color:var(--red)">' + esc(t.resetBtn) + '</button>');
   },
   lang(el){
     if(el.dataset.v === LANG && !sheetOpen()) return;
@@ -2795,6 +2804,20 @@ const A = {
     });
   },
   goTeams: () => go({ v: 'teams' }),
+  resetAsk(){
+    const t = T();
+    openSheet(t.resetQ, t.resetText(DB.teams.length, DB.matches.length),
+      '<button class="btn soft" data-act="backupExport">' + esc(t.resetBackupFirst) + '</button>' +
+      '<button class="btn danger" data-act="resetDo" style="margin-top:8px">' + esc(t.resetOk) + '</button>');
+  },
+  resetDo(){
+    // Alles von PitchPro auf diesem Geraet: Daten und Einstellungen. Nur die Sprache bleibt.
+    try { scanStop(); } catch(e){}
+    try { const ln = notifyApi(); if(ln && ln.cancelAll) ln.cancelAll(); } catch(e){}
+    // Feste Liste statt Praefix: im Kaderplaner teilen sich mehrere Apps denselben Speicher
+    [DATA_KEY, 'pp_theme', 'pp_fold', 'pp_field', 'pp_onboarding_done', 'pp_xopts'].forEach(k => { try { localStorage.removeItem(k); } catch(e){} });
+    location.reload();
+  },
   backupLater(){ DB.backupSnoozeUntil = Date.now() + 14 * 86400000; save(); render(false); },
   goStats(el){
     const at = activeTeam();
