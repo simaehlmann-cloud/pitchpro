@@ -115,6 +115,8 @@ jobs:
           rm -rf build/www/*
           cp index.html manifest.json sw.js image.png icon_maskable.png build/www/
           cp datenschutz.html impressum.html datenschutz-en.html impressum-en.html build/www/
+          # QR-Code und Kompression fuer "An PitchPro senden" (werden erst bei Bedarf geladen)
+          cp -r lib build/www/lib
 
           echo "--- Kontrolle: was hier steht, landet im Store ---"
           grep -o '<widget[^>]*>' build/config.xml | tr ' ' '\n' | grep -E 'id=|version=|CFBundleVersion'
