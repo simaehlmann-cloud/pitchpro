@@ -37,6 +37,16 @@ Cordova-Builds über GitHub Actions für Google Play und den App Store, Deutsch/
   auf Android ohne Sonderrecht für exakte Wecker, daher im Energiesparmodus evtl. etwas verzögert).
 - **Spielbericht** – Ergebnis, Halbzeitstand, Torfolge, Karten, Wechsel, Spielzeiten; als Text teilen
   oder **als Bild** (Ergebnis-Grafik 1080 px für WhatsApp & Co.).
+- **An PitchPro senden** (ohne Server) – Spielbericht im Bericht über „📲 An PitchPro senden“, Spieltag
+  vor dem Anpfiff über „📲 Spieltag an Helfer senden“. Wählbar, was mitgeht (Karten, Wechsel und
+  Spielzeiten, Notizen, Gegnerspieler bzw. Aufstellung, Wechselerinnerung, Wechselplan, Vorlagen,
+  Gegnerkader) und wie Namen erscheinen (Vornamen – Standard –, nur Rückennummern, voller Name).
+  Weitergabe als **QR-Code**, **Nachricht** oder **Datei**. Empfangen auf der Startseite über
+  „📥 Bericht oder Spieltag empfangen“: QR-Code mit der Kamera scannen, Code einfügen oder Datei öffnen.
+  Gleiches Spiel (gleiche ID, z. B. Spieltag → Helfer → zurück): **Zusammenführen** (fehlende Ereignisse
+  ergänzen, doppelte werden am Inhalt erkannt) oder **Ersetzen**; sonst als eigenes Spiel speichern oder
+  mit einem Spiel vom selben Tag/gegen denselben Gegner zusammenführen (Spieler über Nummer bzw. Vorname).
+  Empfangene Berichte ohne Wechsel zeigen keine Spielzeiten.
 - **Statistik** – über alle abgeschlossenen Spiele eines Teams: Bilanz (gesamt, Heim, Auswärts),
   pro Spieler Einsätze, Startelf, Minuten, Ø Minuten, Anteil an der Spielzeit, Tore (Elfmeter),
   Eigentore, Karten. Zeitraum Saison / Hinrunde / Rückrunde / Gesamt (Saison ab 1. Juli),
@@ -49,10 +59,25 @@ Cordova-Builds über GitHub Actions für Google Play und den App Store, Deutsch/
 - **Sicherung** – alle Teams und Spiele als Datei exportieren/importieren (⚙︎). Ab 3 neuen Spielen und
   30 Tagen ohne Sicherung erinnert die Startseite daran.
 
+## Austauschformat (Code, QR, Datei)
+
+`PP1R.<daten>` (Spielbericht) bzw. `PP1P.<daten>` (Spieltag). `<daten>` = JSON → deflate → Base64url.
+Im JSON stehen Spieler als `[id, name, nr]`, Ereignisse als kurze Arrays mit Spieler-Index und Zeiten in
+Sekunden (`xchPack`/`xchUnpack` in `index.html`). Spieler- und Spiel-IDs bleiben erhalten – darauf beruht
+das Zusammenführen beim Trainer. Eine Datei ist JSON mit `kind: "pitchpro-share"` und dem Code im Feld `code`;
+sie lässt sich auch über *Sicherung importieren* öffnen. Typische Größe eines 7er-Spiels: rund 900 Zeichen;
+ab 1700 Zeichen bietet die App keinen QR-Code mehr an (zu dicht), Nachricht und Datei gehen immer.
+
+Bibliotheken in `lib/` (Lizenzen in `lib/LICENSES.txt`), werden erst bei Bedarf geladen:
+`pp-share.js` (fflate, qrcode-generator) und `pp-scan.js` (jsQR; auf Android nutzt die App, wenn vorhanden,
+den eingebauten `BarcodeDetector`). Kamera: Android `CAMERA` (nicht Pflicht), iOS `NSCameraUsageDescription`
+und `AllowInlineMediaPlayback` – beides in `config.xml`.
+
 ## Eingebettet im U11-Kaderplaner
 
 Liegt PitchPro im Unterordner `pitch/` des Kaderplaners und läuft dort in einem Rahmen (iframe),
-tauschen beide Apps Nachrichten aus (`postMessage`, nur gleicher Ursprung). Eigenständig – Web,
+tauschen beide Apps Nachrichten aus (`postMessage`, nur gleicher Ursprung).
+Für „An PitchPro senden“ muss der Ordner `lib/` mit nach `pitch/`; fehlt er, meldet die App das beim Teilen. Eigenständig – Web,
 Play Store, App Store – ist das ohne jede Wirkung.
 
 | Nachricht | Richtung | Inhalt |
@@ -97,7 +122,8 @@ Wie bei TacticBoard – die Workflows sind übernommen und auf PitchPro angepass
 - `.github/workflows/ios.yml` – gleiche Secrets wie bei TacticBoard, aber ein **neues
   App-Store-Profil für `de.pitchpro.app`** (App-ID in Apple Developer anlegen). Upload nach
   App Store Connect nur per „Run workflow“.
-- Version in `config.xml` vor jedem Store-Update erhöhen.
+- Version in `config.xml` (und `APP_VERSION` in `index.html`) vor jedem Store-Update erhöhen.
+- Die Workflows kopieren `lib/` mit in die App.
 - Icons: `image.png`, `icon_fg.png`, `icon_bg.png`, `icon_store.png`, `icon_maskable.png`
   (gleicher Rasen wie TacticBoard); `tools/` erzeugt daraus alle Größen.
 - Teilen-Plugin `plugins/cordova-plugin-tb-share` ist das TacticBoard-Plugin, ergänzt um

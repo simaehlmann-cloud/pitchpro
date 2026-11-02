@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <!-- WICHTIG: Vor jedem Play-Store-Update die version erhoehen (z.B. 1.0.0 -> 1.0.1) -->
-<widget id="de.pitchpro.app" version="1.0.1" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+<widget id="de.pitchpro.app" version="1.1.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0" xmlns:android="http://schemas.android.com/apk/res/android">
     <name>PitchPro</name>
     <description>Tore, Karten und Wechsel am Spielfeldrand protokollieren – mit Spielzeiten und Wechselerinnerung</description>
     <author email="smaehlmann.appdev@gmail.com">Simon Mählmann</author>
@@ -15,6 +15,15 @@
     <preference name="AndroidXEnabled" value="true" />
 
     <platform name="android">
+        <!-- Kamera fuer den QR-Scanner. cordova-android fragt die Erlaubnis zur
+             Laufzeit ab (SystemWebChromeClient.onPermissionRequest), braucht dafuer
+             aber den Eintrag im Manifest. required="false": Geraete ohne Kamera
+             bleiben im Play Store sichtbar - dort gibt es dann Nachricht/Datei. -->
+        <config-file target="AndroidManifest.xml" parent="/manifest">
+            <uses-permission android:name="android.permission.CAMERA" />
+            <uses-feature android:name="android.hardware.camera" android:required="false" />
+            <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+        </config-file>
         <!-- src        = Launcher-Icon fuer Android 7 und aelter (kein Adaptive Icon)
              foreground = Motiv mit Transparenz, sitzt in der Sicherheitszone
              background = vollflaechiger Rasenhintergrund
@@ -62,6 +71,15 @@
         <!-- Wischen vom linken Rand geht zurueck, falls je eine Navigation die
              App-Oberflaeche verlaesst. Ersetzt die fehlende Zurueck-Taste. -->
         <preference name="AllowBackForwardNavigationGestures" value="true" />
+
+        <!-- QR-Scanner: Kamerabild im Seitenlayout statt Vollbild-Player.
+             Die Kamera-Freigabe fuer die eigene Seite erteilt cordova-ios 8
+             selbst (MediaPermissionGrantType, Standard grantIfSameHostElsePrompt);
+             iOS fragt dann nur einmal mit dem Text unten. -->
+        <preference name="AllowInlineMediaPlayback" value="true" />
+        <edit-config target="NSCameraUsageDescription" file="*-Info.plist" mode="overwrite">
+            <string>PitchPro nutzt die Kamera nur zum Scannen eines QR-Codes, mit dem ein Spielbericht oder Spieltag aus einem anderen PitchPro übernommen wird. Es werden keine Bilder gespeichert.</string>
+        </edit-config>
 
         <!-- Keine eigene Verschluesselung. Ohne diesen Eintrag fragt
              App Store Connect bei jedem Build erneut nach. -->

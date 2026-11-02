@@ -301,6 +301,16 @@ button.sp:active { background:var(--surface2); }
   padding:12px 18px; border-radius:12px; font-weight:600; font-size:15px; z-index:30; opacity:0; pointer-events:none; transition:opacity .2s;
   max-width:90vw; text-align:center; }
 #toast.show { opacity:1; }
+/* Teilen per QR-Code: immer schwarz auf weiss, auch im dunklen Design */
+.qrbox { background:#fff; border-radius:16px; padding:10px; margin:4px auto 10px; max-width:380px; }
+.qrbox svg { display:block; width:100%; height:auto; }
+#scan { position:fixed; inset:0; z-index:40; background:#000; }
+#scan[hidden] { display:none; }
+#scan video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+#scan .scan-frame { position:absolute; left:50%; top:42%; width:min(72vw, 72vh, 420px); aspect-ratio:1; transform:translate(-50%, -50%);
+  border:3px solid rgba(255,255,255,.9); border-radius:22px; box-shadow:0 0 0 100vmax rgba(0,0,0,.45); }
+#scan .scan-bar { position:absolute; left:0; right:0; bottom:0; padding:16px 16px calc(var(--safe-b) + 18px); text-align:center; }
+#scan-tip { color:#fff; font-weight:700; font-size:17px; margin-bottom:12px; text-shadow:0 1px 3px #000; }
 </style>
 </head>
 <body>
@@ -319,6 +329,8 @@ button.sp:active { background:var(--surface2); }
 <div id="sheet" role="dialog" aria-modal="true"></div>
 <div id="toast"></div>
 <div id="onb" hidden></div>
+<div id="scan" hidden><video id="scan-v" playsinline muted autoplay></video><div class="scan-frame"></div>
+  <div class="scan-bar"><div id="scan-tip"></div><button class="btn" data-act="xScanStop" id="scan-x"></button></div></div>
 <input type="file" id="file-in" accept=".json,.csv,.txt,application/json,text/csv,text/plain,text/comma-separated-values" style="display:none" />
 
 <!-- Wird nur in den App-Builds (Android und iOS) von Cordova bereitgestellt.
@@ -754,7 +766,7 @@ const BRIDGE_ORIGIN = location.origin && location.origin !== 'null' ? location.o
 let bridgeLastClock = null, bridgeLastReminder = '';
 const bridgeSent = {};   // matchId -> zuletzt gesendeter Stand (JSON)
 const bridgeCaps = { share: false };   // was der Kaderplaner nativ kann (kp:caps)
-const APP_VERSION = '1.0.1';   // gleich halten mit version="..." in config.xml
+const APP_VERSION = '1.1.0';   // gleich halten mit version="..." in config.xml
 const DEFAULT_SETTINGS = { periods: 2, periodMinutes: 25, playersOnField: 7, subIntervalMinutes: 0, fairPlay: false, assists: false };
 
 /* Kennungen: nur Buchstaben, Ziffern, _ und - (sie stehen in data-Attributen) */
@@ -824,6 +836,9 @@ function cleanMatch(m){
     events: evs, reminderAckMs: num(m.reminderAckMs, 0, 1e9, 0),
     manual: m.manual === true,
     kp: cleanKp(m.kp, known),
+    // per Code empfangen (Bericht 'r' oder Spieltag 'p'); subs/cards: war das enthalten?
+    recv: m.recv && typeof m.recv === 'object' ? { at: num(m.recv.at, 0, 9e15, 0), kind: m.recv.kind === 'p' ? 'p' : 'r',
+      subs: m.recv.subs !== false, cards: m.recv.cards !== false } : null,
     plan: (() => {
       if(!Array.isArray(m.plan)) return null;
       const out = m.plan.slice(0, 30).map(x => {
@@ -1350,6 +1365,7 @@ function buildReport(m, nowGame){
   const subs = evs.filter(e => e.type === 'sub');
   if(subs.length){ L.push('', t.rSubs); subs.forEach(s => L.push(fmtMinute(s, pm) + '  ' + describe(m, s) + (s.side === 'opp' ? ' (' + m.oppName + ')' : ''))); }
   if(m.notesShare && m.notes && m.notes.trim()) L.push('', t.notes, m.notes.trim());
+  if(m.recv && !m.recv.subs) return L.join('\n');   // empfangen ohne Wechsel: Spielzeiten waeren falsch
   L.push('', t.playTimes(m.ownName));
   m.ownPlayers.slice().sort((a, b) => st.stats[b.id].played - st.stats[a.id].played)
     .forEach(p => L.push(pLabel(p) + ': ' + Math.round(st.stats[p.id].played / 60000) + ' min'));
@@ -1729,6 +1745,7 @@ const cur = () => STACK[STACK.length - 1];
 function go(route){ closeSheet(); STACK.push(route); render(true); navDone(); }
 function replace(route){ closeSheet(); STACK[STACK.length - 1] = route; render(true); navDone(); }
 function back(){
+  if(scanOpen()){ scanStop(); return true; }
   if(sheetOpen()){ closeSheet(); return true; }
   if(STACK.length > 1){ STACK.pop(); render(true); navDone(); return true; }
   return false;
@@ -1847,7 +1864,8 @@ function viewHome(){
     '<div class="row2" style="margin-top:8px"><button class="btn soft" data-act="pasteMatchday">' + esc(t.pasteMatchday) + '</button>' +
     '<button class="btn soft" data-act="goTeams">' + esc(t.teamsBtn) + '</button></div>' +
     (act ? '<div class="row2" style="margin-top:8px"><button class="btn soft" data-act="goStats">' + esc(t.statsBtn) + '</button>' +
-      '<button class="btn soft" data-act="pastMatch">' + esc(t.pastMatch) + '</button></div>' : '') + '</div>';
+      '<button class="btn soft" data-act="pastMatch">' + esc(t.pastMatch) + '</button></div>' : '') +
+    '<button class="btn soft" data-act="xReceive" style="margin-top:8px">' + esc(t.xRecvBtn) + '</button></div>';
   const bk = backupDue();
   if(bk) h += '<div class="due" style="border-color:var(--line);background:var(--surface)"><h3 style="color:var(--text);font-size:17px">' + esc(t.backupDueTitle) + '</h3>' +
     '<div class="hint" style="margin:0 0 10px;font-size:14px">' + esc(bk.never ? t.backupNever(bk.n) : t.backupAgo(bk.days, bk.n)) + '</div>' +
@@ -2077,6 +2095,11 @@ function viewLive(r){
     // Gegner direkt unter der Tafel
     '<button class="oppbtn" data-act="opp"><span class="t1">' + esc(m.oppName) + '</span><span class="t2">' + esc(t.oppBar) + '</span></button>';
 
+  if(c.status === 'pre' && !m.manual){
+    if(m.recv && m.recv.kind === 'p') h += '<div class="next" style="margin-top:12px;color:var(--text)">' + esc(t.xHelperNote) + '</div>';
+    else h += '<button class="btn soft" data-act="xSend" data-k="p" style="margin-top:12px">' + esc(t.xSendPkgBtn) + '</button>' +
+      '<div class="hint">' + esc(t.xSendPkgHint) + '</div>';
+  }
   if(c.status === 'finished') h += '<div class="next" style="margin-top:12px;color:var(--text)">' + esc(t.editHint) + (m.manual ? ' ' + esc(t.editHintManual) : '') + '</div>';
   if(c.status === 'finished' && st.score.own === st.score.opp && !m.shootout){
     h += '<div class="row2" style="margin-top:16px">' + (!m.extra && !m.manual ? '<button class="btn soft" data-act="extraTime">' + esc(t.extraTime) + '</button>' : '') +
@@ -2377,7 +2400,10 @@ function viewReport(r){
     (shootoutScore(m) ? '<div class="ht" style="color:var(--text)">' + esc(t.soShort) + ' ' + scoreText(m, shootoutScore(m)) + '</div>' : m.extra ? '<div class="ht">' + esc(t.aetLong) + '</div>' : '') +
     '<div class="dt">' + fmtDate(matchDate(m), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) + '</div></div>' +
     '<button class="btn lg" data-act="shareReport" style="margin-top:14px">' + esc(t.shareReport) + '</button>' +
-    '<button class="btn soft" data-act="shareImage" style="margin-top:8px">' + esc(t.shareImage) + '</button>';
+    '<button class="btn soft" data-act="shareImage" style="margin-top:8px">' + esc(t.shareImage) + '</button>' +
+    '<button class="btn soft" data-act="xSend" data-k="r" style="margin-top:8px">' + esc(t.xSendBtn) + '</button>';
+  const noTimes = !!(m.recv && !m.recv.subs);
+  if(m.recv && m.recv.kind === 'r') h += '<div class="hint" style="text-align:center">' + esc(t.xReceivedNote + (noTimes ? ' – ' + t.xNoSubsNote : '')) + '</div>';
   if(m.clock.status !== 'finished') h += '<button class="btn soft" data-act="back" style="margin-top:8px">' + esc(t.backToGame) + '</button>';
   else h += '<button class="btn ghost" data-act="editMatch" style="margin-top:8px">' + esc(t.editMatch) + '</button>';
   h += '<div class="sec"><h2>' + esc(t.events) + '</h2></div>' + (m.events.length ? '<div class="card" style="padding:4px 14px">' +
@@ -2385,7 +2411,7 @@ function viewReport(r){
       (e.side === 'opp' && e.type !== 'goal' && e.playerId ? ' (' + esc(m.oppName) + ')' : '') + '</span></div>').join('') + '</div>' : '<div class="empty">' + esc(t.noEvents) + '</div>');
   if(m.notes && m.notes.trim()) h += '<div class="sec"><h2>' + esc(t.notes) + '</h2></div><div class="card"><div class="notes-view">' + esc(m.notes) + '</div>' +
     '<button class="toggle" data-act="notesShare"><span style="flex:1;font-size:15px">' + esc(t.notesInReport) + '</span><span class="sw' + (m.notesShare ? ' on' : '') + '"><i></i></span></button></div>';
-  h += '<div class="sec"><h2>' + esc(t.playTimes(m.ownName)) + '</h2></div><div class="card">' +
+  if(!noTimes) h += '<div class="sec"><h2>' + esc(t.playTimes(m.ownName)) + '</h2></div><div class="card">' +
     m.ownPlayers.slice().sort((a, b) => st.stats[b.id].played - st.stats[a.id].played).map(p => {
       const ms = st.stats[p.id].played;
       return '<div class="pt"><div class="r"><span>' + esc(pLabel(p)) + '</span><span class="num">' + Math.round(ms / 60000) + ' min</span></div>' +
@@ -2759,6 +2785,7 @@ const A = {
     pickFile(data => {
       if(data && data.kind === 'pitchpro-backup') importBackup(data);
       else if(data && data.kind === 'squads') importSquads(data);
+      else if(data && data.kind === 'pitchpro-share' && typeof data.code === 'string') xchHandleText(data.code);
       else toast(T().importError);
     });
   },
@@ -3299,6 +3326,594 @@ function importSquads(data){
   });
   save(); render(false); toast(t.importedTeams(list.length));
 }
+
+/* ---------------------------------------------------------------------
+   AUSTAUSCH ZWISCHEN ZWEI PITCHPRO-APPS - OHNE SERVER
+   Der Inhalt steckt vollstaendig im Code: Spiel als JSON -> deflate ->
+   Base64url, davor "PP1R." (Spielbericht) bzw. "PP1P." (Spieltag fuer
+   Helfer). Wege: QR-Code (in der App scannen), Nachricht (Code einfuegen),
+   Datei (.json mit kind "pitchpro-share"). Nichts verlaesst das Geraet
+   ausser ueber das Teilen-Menue.
+
+   Spielbericht  (R): Tore immer; Karten, Wechsel/Spielzeiten, Notizen,
+                      Gegnerspieler waehlbar. Namen: Vornamen, Nummern, voll.
+   Spieltag      (P): dieselbe Spiel-ID und Spieler-IDs wie beim Trainer.
+                      Der Helfer protokolliert, schickt den Bericht zurueck,
+                      beim Trainer wird er zusammengefuehrt (gleiche ID).
+   Bibliotheken (lib/pp-share.js, lib/pp-scan.js) werden erst bei Bedarf
+   geladen. Im Kaderplaner muss der Ordner lib/ mit nach pitch/.
+--------------------------------------------------------------------- */
+const XCH_RE = /PP1([RP])\.([A-Za-z0-9_-]{8,})/;
+const XCH_QR_MAX = 1700;   // Zeichen - darueber wird der QR-Code zu dicht zum Abscannen
+const XCH_DEF = {
+  names: 'first',
+  r: { cards: true, subs: true, notes: false, opp: true },
+  p: { lineup: true, reminders: true, plan: true, assists: true, opp: true, notes: false }
+};
+let XOPT = (function(){
+  let s = null;
+  try { s = JSON.parse(localStorage.getItem('pp_xopts') || 'null'); } catch(e){ s = null; }
+  const o = JSON.parse(JSON.stringify(XCH_DEF));
+  if(s && typeof s === 'object'){
+    if(['first', 'number', 'full'].indexOf(s.names) !== -1) o.names = s.names;
+    ['r', 'p'].forEach(k => { if(s[k] && typeof s[k] === 'object') Object.keys(o[k]).forEach(x => { if(typeof s[k][x] === 'boolean') o[k][x] = s[k][x]; }); });
+  }
+  return o;
+})();
+function saveXopt(){ try { localStorage.setItem('pp_xopts', JSON.stringify(XOPT)); } catch(e){} }
+
+const libLoads = {};
+function loadLib(name){
+  if(!libLoads[name]) libLoads[name] = new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = 'lib/' + name + '.js';
+    s.onload = () => res();
+    s.onerror = () => { delete libLoads[name]; s.remove(); rej(new Error(T().xLibMissing)); };
+    document.head.appendChild(s);
+  });
+  return libLoads[name];
+}
+const b64u = {
+  enc(bytes){
+    let s = '';
+    for(let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  },
+  dec(str){
+    const s = atob(str.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((str.length + 3) % 4));
+    const b = new Uint8Array(s.length);
+    for(let i = 0; i < s.length; i++) b[i] = s.charCodeAt(i);
+    return b;
+  }
+};
+async function xchEncode(kind, payload){
+  await loadLib('pp-share');
+  const raw = window.fflate.strToU8(JSON.stringify(payload));
+  return 'PP1' + kind + '.' + b64u.enc(window.fflate.deflateSync(raw, { level: 9 }));
+}
+async function xchDecode(text){
+  const x = XCH_RE.exec(String(text || '').replace(/\s+/g, ''));
+  if(!x) return null;
+  await loadLib('pp-share');
+  const json = window.fflate.strFromU8(window.fflate.inflateSync(b64u.dec(x[2])));
+  const p = JSON.parse(json);
+  if(!p || typeof p !== 'object' || p.v !== 1 || !p.m) throw new Error(T().xBadCode);
+  p.k = x[1] === 'P' ? 'p' : 'r';
+  p.m = xchUnpack(p.m);
+  if(!p.m) throw new Error(T().xBadCode);
+  return p;
+}
+
+/* Namen fuer den Empfaenger: Vornamen (doppelte mit Initiale), Nummern oder voll */
+function xchNames(players, mode){
+  const out = {};
+  const first = p => p.name.split(' ')[0];
+  const count = {};
+  players.forEach(p => { const f = first(p).toLowerCase(); count[f] = (count[f] || 0) + 1; });
+  players.forEach((p, i) => {
+    if(mode === 'full') out[p.id] = p.name;
+    else if(mode === 'number') out[p.id] = p.number != null ? '#' + p.number : T().xPlayerN(i + 1);
+    else {
+      const parts = p.name.split(' ');
+      out[p.id] = count[first(p).toLowerCase()] > 1 && parts[1] ? parts[0] + ' ' + parts[1][0] + '.' : parts[0];
+    }
+  });
+  return out;
+}
+/* Kompakte Form fuer den Code: Spieler als [id, name, nr], Ereignisse als
+   Arrays mit Spieler-Index statt ID, Zeiten in Sekunden. Spieler-IDs bleiben
+   erhalten (Zusammenfuehren beim Trainer), Ereignis-IDs werden neu vergeben -
+   doppelte Ereignisse erkennt das Zusammenfuehren am Inhalt. */
+const XEV = { goal: 'g', card: 'c', sub: 's', keeper: 'k' };
+const XKIND = { normal: 'n', penalty: 'p', ownGoal: 'o' }, XCARD = { yellow: 'y', yellowRed: 'yr', red: 'r' };
+const inv = o => Object.keys(o).reduce((a, k) => (a[o[k]] = k, a), {});
+function xchPack(m){
+  const all = m.ownPlayers.concat(m.oppPlayers), idx = {};
+  all.forEach((p, i) => { idx[p.id] = i; });
+  const ix = id => id != null && id in idx ? idx[id] : -1;
+  const sec = v => Math.round((v || 0) / 1000);
+  const x = Object.assign({}, m);
+  x.ownPlayers = m.ownPlayers.map(p => [p.id, p.name, p.number]);
+  x.oppPlayers = m.oppPlayers.map(p => [p.id, p.name, p.number]);
+  x.startingIds = m.startingIds.map(ix).filter(i => i >= 0);
+  x.keeperId = ix(m.keeperId);
+  if(m.plan) x.plan = m.plan.map(s => [s.min, s.outs.map(ix), s.ins.map(ix)]);
+  x.events = m.events.map(e => {
+    const a = [XEV[e.type], e.side === 'opp' ? 1 : 0, e.period, sec(e.periodMs), sec(e.gameMs)];
+    if(e.type === 'goal') a.push(XKIND[e.kind] || 'n', ix(e.playerId), ix(e.assistId));
+    else if(e.type === 'card') a.push(XCARD[e.card], ix(e.playerId));
+    else if(e.type === 'sub') a.push(ix(e.outId), ix(e.inId));
+    else a.push(ix(e.playerId));
+    if(e.brk) a.push(e.brk);
+    return a;
+  });
+  delete x.reminderAckMs; delete x.kp;
+  return x;
+}
+function xchUnpack(x){
+  if(!x || typeof x !== 'object' || !Array.isArray(x.ownPlayers) || !Array.isArray(x.events)) return null;
+  const pl = a => Array.isArray(a) ? { id: a[0], name: a[1], number: a[2] } : null;
+  const m = Object.assign({}, x);
+  m.ownPlayers = x.ownPlayers.map(pl).filter(Boolean);
+  m.oppPlayers = (Array.isArray(x.oppPlayers) ? x.oppPlayers : []).map(pl).filter(Boolean);
+  const all = m.ownPlayers.concat(m.oppPlayers);
+  const id = i => typeof i === 'number' && all[i] ? all[i].id : null;
+  const T_ = inv(XEV), K_ = inv(XKIND), C_ = inv(XCARD);
+  m.startingIds = (Array.isArray(x.startingIds) ? x.startingIds : []).map(id).filter(Boolean);
+  m.keeperId = id(x.keeperId);
+  m.plan = Array.isArray(x.plan) ? x.plan.map(s => Array.isArray(s) ? { min: s[0], outs: (s[1] || []).map(id), ins: (s[2] || []).map(id), st: 'open' } : null).filter(Boolean) : null;
+  m.events = x.events.map(a => {
+    if(!Array.isArray(a)) return null;
+    const e = { id: uid(), type: T_[a[0]], side: a[1] === 1 ? 'opp' : 'own', period: a[2], periodMs: (a[3] || 0) * 1000, gameMs: (a[4] || 0) * 1000 };
+    let rest = a.slice(5);
+    if(e.type === 'goal'){ e.kind = K_[rest[0]] || 'normal'; e.playerId = id(rest[1]); e.assistId = id(rest[2]); rest = rest.slice(3); }
+    else if(e.type === 'card'){ e.card = C_[rest[0]]; e.playerId = id(rest[1]); rest = rest.slice(2); }
+    else if(e.type === 'sub'){ e.outId = id(rest[0]); e.inId = id(rest[1]); rest = rest.slice(2); }
+    else if(e.type === 'keeper'){ e.playerId = id(rest[0]); rest = rest.slice(1); }
+    else return null;
+    if(rest[0] === 'ht' || rest[0] === 'ft') e.brk = rest[0];
+    return e;
+  }).filter(Boolean);
+  return m;
+}
+/* Spiel fuer den Versand zuschneiden - nur, was angehakt ist */
+function xchMatch(m, kind){
+  const o = XOPT[kind];
+  const withOpp = o.opp && m.oppPlayers.length > 0;
+  const nm = xchNames(m.ownPlayers, XOPT.names), on = xchNames(m.oppPlayers, XOPT.names);
+  const ownIds = new Set(m.ownPlayers.map(p => p.id));
+  const keepId = id => id && (ownIds.has(id) || withOpp) ? id : null;
+  const x = {
+    id: m.id, createdAt: m.createdAt, kickoffAt: m.kickoffAt || null, ownTeamId: m.ownTeamId, ownName: m.ownName, oppName: m.oppName,
+    isHome: m.isHome, ownPlayers: m.ownPlayers.map(p => ({ id: p.id, name: nm[p.id], number: p.number })),
+    oppPlayers: withOpp ? m.oppPlayers.map(p => ({ id: p.id, name: on[p.id], number: p.number })) : [],
+    startingIds: m.startingIds, keeperId: m.keeperId, settings: Object.assign({}, m.settings),
+    notes: o.notes && m.notes ? m.notes : '', notesShare: !!(o.notes && m.notes)
+  };
+  if(kind === 'p'){
+    // Spieltag fuer Helfer: noch nicht angepfiffen, dieselben IDs wie beim Trainer
+    x.clock = Clock.fresh(); x.events = []; x.kickoffAt = null;
+    if(!o.lineup){ x.startingIds = []; x.keeperId = null; }
+    if(!o.reminders){ x.settings.subIntervalMinutes = 0; x.settings.fairPlay = false; }
+    if(!o.assists) x.settings.assists = false;
+    if(o.plan && o.lineup && m.plan) x.plan = m.plan.map(s => ({ min: s.min, outs: s.outs, ins: s.ins, st: 'open' }));
+  } else {
+    x.clock = Object.assign({}, m.clock);
+    // laufende Uhr einfrieren: beim Empfaenger soll sie nicht weiterlaufen
+    if(x.clock.status === 'running'){ x.clock.periodElapsedMs = Clock.periodElapsed(m.clock, Date.now()); x.clock.status = 'paused'; x.clock.runningSince = null; }
+    x.manual = m.manual; x.extra = m.extra; x.shootout = m.shootout;
+    x.events = m.events.filter(e => e.type === 'goal' || (e.type === 'card' && o.cards) || ((e.type === 'sub' || e.type === 'keeper') && o.subs))
+      .map(e => {
+        const c = Object.assign({}, e);
+        ['playerId', 'assistId', 'outId', 'inId'].forEach(k => { if(k in c) c[k] = keepId(c[k]); });
+        return c;
+      }).filter(e => e.type !== 'sub' || e.inId);
+    x.settings.subIntervalMinutes = 0; x.settings.fairPlay = false;
+  }
+  return { v: 1, inc: Object.assign({}, o, { names: XOPT.names }), m: xchPack(x) };
+}
+function xchTitle(m){ return (m.isHome ? m.ownName : m.oppName) + ' – ' + (m.isHome ? m.oppName : m.ownName); }
+
+/* ----- Senden ----- */
+function openSendSheet(kind){
+  const t = T(), m = curMatch(); if(!m) return;
+  const o = XOPT[kind];
+  const sw = (k, label, hint) => '<button class="toggle" data-act="xOpt" data-kind="' + kind + '" data-k="' + k + '"><span style="flex:1"><div style="font-size:16px;font-weight:600">' +
+    esc(label) + '</div>' + (hint ? '<div class="hint" style="margin:2px 0 0">' + esc(hint) + '</div>' : '') + '</span><span class="sw' + (o[k] ? ' on' : '') + '"><i></i></span></button>';
+  let h = '<div class="hint" style="margin:0 2px 6px;font-weight:700">' + esc(t.xWhat) + '</div><div class="card" style="padding:4px 14px;margin-bottom:14px">';
+  if(kind === 'r'){
+    h += '<div class="toggle" style="cursor:default"><span style="flex:1;font-size:16px;font-weight:600">' + esc(t.xGoals) + '</span><span class="hint" style="margin:0">' + esc(t.xAlways) + '</span></div>';
+    if(m.events.some(e => e.type === 'card')) h += sw('cards', t.xCards);
+    h += sw('subs', t.xSubs, t.xSubsHint);
+    if(m.notes && m.notes.trim()) h += sw('notes', t.xNotes);
+    if(m.oppPlayers.length) h += sw('opp', t.xOpp);
+  } else {
+    h += sw('lineup', t.xLineup, t.xLineupHint);
+    if(m.settings.subIntervalMinutes || m.settings.fairPlay) h += sw('reminders', t.xReminders);
+    if(m.plan && m.plan.length) h += sw('plan', t.xPlan);
+    if(m.settings.assists) h += sw('assists', t.xAssists);
+    if(m.oppPlayers.length) h += sw('opp', t.xOppSquad);
+    if(m.notes && m.notes.trim()) h += sw('notes', t.xNotes);
+  }
+  h += '</div><div class="hint" style="margin:0 2px 6px;font-weight:700">' + esc(t.xNamesTitle) + '</div><div class="chips" style="margin-bottom:4px">' +
+    [['first', t.xNamesFirst], ['number', t.xNamesNumber], ['full', t.xNamesFull]].map(([v, l]) =>
+      '<button class="chip' + (XOPT.names === v ? ' on' : '') + '" data-act="xNames" data-kind="' + kind + '" data-v="' + v + '">' + esc(l) + '</button>').join('') + '</div>' +
+    '<div class="hint" style="margin-bottom:14px">' + esc(t.xNamesHint) + '</div>' +
+    '<button class="btn" data-act="xQr" data-kind="' + kind + '">' + esc(t.xQrBtn) + '</button>' +
+    '<button class="btn soft" data-act="xMsg" data-kind="' + kind + '" style="margin-top:8px">' + esc(t.xMsgBtn) + '</button>' +
+    '<button class="btn soft" data-act="xFile" data-kind="' + kind + '" style="margin-top:8px">' + esc(t.xFileBtn) + '</button>' +
+    '<div class="hint">' + esc(kind === 'p' ? t.xPkgHint : t.xNeedsApp) + '</div>';
+  openSheet(kind === 'p' ? t.xSendPkgTitle : t.xSendTitle, xchTitle(m), h, { xKind: kind });
+}
+function qrSvg(code){
+  const qr = window.qrcode(0, code.length > 1100 ? 'L' : 'M');
+  qr.addData(code, 'Byte'); qr.make();
+  const n = qr.getModuleCount(), q = 4, size = n + 2 * q;
+  let d = '';
+  for(let r = 0; r < n; r++){
+    for(let c = 0; c < n; c++){
+      if(!qr.isDark(r, c)) continue;
+      let w = 1; while(c + w < n && qr.isDark(r, c + w)) w++;   // Laeufe zusammenfassen - kleineres SVG
+      d += 'M' + (c + q) + ' ' + (r + q) + 'h' + w + 'v1h-' + w + 'z';
+      c += w - 1;
+    }
+  }
+  return '<svg viewBox="0 0 ' + size + ' ' + size + '" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" role="img" aria-label="QR-Code">' +
+    '<rect width="' + size + '" height="' + size + '" fill="#fff"/><path d="' + d + '" fill="#000"/></svg>';
+}
+async function xchCodeFor(kind){
+  const m = curMatch(); if(!m) return null;
+  try { return { m, code: await xchEncode(kind === 'p' ? 'P' : 'R', xchMatch(m, kind)) }; }
+  catch(e){ toast(String(e && e.message || e)); return null; }
+}
+function xchMessage(kind, m, code){
+  const t = T();
+  const st = derive(m, Clock.game(m.clock, Date.now()));
+  const head = kind === 'p' ? t.xMsgHeadPkg + '\n' + xchTitle(m)
+    : t.xMsgHead + '\n' + xchTitle(m) + '  ' + scoreText(m, st.score) + '\n' + fmtDate(matchDate(m));
+  return head + '\n\n' + t.xMsgHow + '\n\n' + code;
+}
+
+/* ----- Empfangen ----- */
+let XCH_PENDING = null;   // entschluesselter Inhalt, bis der Nutzer waehlt
+async function xchHandleText(text){
+  const t = T();
+  let p = null;
+  try { p = await xchDecode(text); }
+  catch(e){ toast(e && e.message === t.xLibMissing ? t.xLibMissing : t.xBadCode); return; }
+  if(!p){ toast(t.xNoCode); return; }
+  const m = cleanMatch(p.m);
+  if(!m){ toast(t.xBadCode); return; }
+  const inc = p.inc && typeof p.inc === 'object' ? p.inc : {};
+  m.recv = { at: Date.now(), kind: p.k, subs: p.k === 'p' || inc.subs !== false, cards: p.k === 'p' || inc.cards !== false };
+  XCH_PENDING = { kind: p.k, m };
+  xchOffer();
+}
+/* Kandidaten zum Zusammenfuehren: gleiches Spiel (ID) oder gleicher Gegner bzw. Tag */
+function xchCandidates(inc){
+  const day = 3 * 86400000, opp = inc.oppName.trim().toLowerCase();
+  return DB.matches.filter(x => x.id !== inc.id && (Math.abs(matchDate(x) - matchDate(inc)) <= day ||
+    (x.oppName.trim().toLowerCase() === opp && Math.abs(matchDate(x) - matchDate(inc)) <= 14 * day))).slice(0, 4);
+}
+function xchOffer(){
+  const t = T(), x = XCH_PENDING; if(!x) return;
+  const m = x.m, same = matchById(m.id);
+  const st = derive(m, m.clock.status === 'finished' ? m.clock.completedMs : Clock.game(m.clock, Date.now()));
+  const sub = xchTitle(m) + (x.kind === 'r' ? '  ' + scoreText(m, st.score) : '') + ' · ' + fmtDate(matchDate(m));
+  let h = '';
+  if(x.kind === 'p'){
+    h += '<div class="hint" style="margin:0 2px 12px">' + esc(t.xPkgInfo(m.ownPlayers.length)) + '</div>';
+    if(same){
+      h += '<div class="hint" style="margin:0 2px 10px;color:var(--amber);font-weight:700">' + esc(t.xPkgExists) + '</div>' +
+        act('xOpenSame', t.xOpenMatch, '');
+      if(same.clock.status === 'pre' && !same.events.length) h += act('xTakePkg', t.xPkgReplace, t.xPkgReplaceHint);
+    } else h += '<button class="btn lg" data-act="xTakePkg">' + esc(t.xPkgTake) + '</button>';
+  } else {
+    h += '<div class="hint" style="margin:0 2px 12px">' + esc(t.xRepInfo(m.events.filter(e => e.type === 'goal').length, x.m.recv.subs, x.m.recv.cards)) + '</div>';
+    if(same){
+      h += '<div class="hint" style="margin:0 2px 10px;font-weight:700">' + esc(t.xSameMatch) + '</div>' +
+        act('xMergeSame', t.xMergeAdd, t.xMergeAddHint, '', ' data-mode="add"') +
+        act('xMergeSame', t.xMergeReplace, t.xMergeReplaceHint, '', ' data-mode="replace"');
+    } else {
+      h += '<button class="btn lg" data-act="xSaveNew">' + esc(t.xSaveNew) + '</button>';
+      const cand = xchCandidates(m);
+      if(cand.length) h += '<div class="hint" style="margin:16px 2px 6px;font-weight:700">' + esc(t.xOrMerge) + '</div>' +
+        cand.map(c => act('xMergeInto', xchTitle(c), fmtDate(matchDate(c)) + ' · ' + t.xMergeAddHint, '', ' data-id="' + c.id + '"')).join('');
+    }
+  }
+  openSheet(x.kind === 'p' ? t.xRecvPkgTitle : t.xRecvRepTitle, sub, h, { xRecv: true });
+}
+
+/* Ereignisse zweier Aufzeichnungen desselben Spiels zusammenfuehren.
+   mode 'add': fehlende Ereignisse ergaenzen, eigene bleiben.
+   mode 'replace': Ereignisse und Uhr aus dem empfangenen Bericht. */
+function xchMerge(target, inc, mode){
+  const tgt = JSON.parse(JSON.stringify(target));
+  const first = n => String(n || '').split(' ')[0].toLowerCase();
+  const map = {};
+  const assign = (list, incoming) => {
+    incoming.forEach(p => {
+      const hit = list.find(q => q.id === p.id) ||
+        (p.number != null && list.find(q => q.number === p.number)) ||
+        (p.name.charAt(0) !== '#' && list.find(q => first(q.name) === first(p.name)));
+      if(hit){ map[p.id] = hit.id; return; }
+      const id = list.some(q => q.id === p.id) ? uid() : p.id;
+      list.push({ id, name: p.name, number: p.number });
+      map[p.id] = id;
+    });
+  };
+  assign(tgt.ownPlayers, inc.ownPlayers);
+  assign(tgt.oppPlayers, inc.oppPlayers);
+  const mp = id => id ? (map[id] || null) : null;
+  const evs = inc.events.map(e => {
+    const c = Object.assign({}, e);
+    ['playerId', 'assistId', 'outId', 'inId'].forEach(k => { if(k in c) c[k] = mp(c[k]); });
+    return c;
+  });
+  const takeClock = mode === 'replace' || tgt.clock.status === 'pre' || (tgt.clock.status !== 'finished' && inc.clock.status === 'finished');
+  if(takeClock){
+    tgt.clock = Object.assign({}, inc.clock); tgt.kickoffAt = inc.kickoffAt || tgt.kickoffAt;
+    tgt.extra = inc.extra; if(inc.manual) tgt.manual = true;
+  }
+  if(mode === 'replace'){
+    tgt.events = evs;
+    if(inc.shootout) tgt.shootout = inc.shootout;
+  } else {
+    const same = (a, b) => a.id === b.id || (a.type === b.type && a.side === b.side && (a.kind || '') === (b.kind || '') &&
+      (a.card || '') === (b.card || '') && (a.playerId || '') === (b.playerId || '') && (a.outId || '') === (b.outId || '') &&
+      (a.inId || '') === (b.inId || '') && Math.abs(a.gameMs - b.gameMs) <= 120000);
+    const add = evs.filter(e => !tgt.events.some(x => same(x, e)));
+    const cap = tgt.clock.status === 'finished' ? tgt.clock.completedMs : Infinity;
+    add.forEach(e => { if(tgt.events.some(x => x.id === e.id)) e.id = uid(); e.gameMs = Math.min(e.gameMs, cap); });
+    tgt.events = tgt.events.concat(add);
+    if(!tgt.shootout && inc.shootout) tgt.shootout = inc.shootout;
+  }
+  if((!tgt.startingIds.length || mode === 'replace') && inc.startingIds.length){
+    tgt.startingIds = inc.startingIds.map(mp).filter(Boolean); tgt.keeperId = mp(inc.keeperId) || tgt.keeperId;
+  }
+  const nt = (inc.notes || '').trim();
+  if(nt && (tgt.notes || '').indexOf(nt) === -1) tgt.notes = ((tgt.notes || '').trim() ? tgt.notes.trim() + '\n\n' : '') + nt;
+  if(tgt.recv) tgt.recv = Object.assign({}, tgt.recv, { subs: tgt.recv.subs || inc.recv.subs, cards: tgt.recv.cards || inc.recv.cards });
+  return cleanMatch(tgt) || target;
+}
+function xchStore(m){
+  const i = DB.matches.findIndex(x => x.id === m.id);
+  if(i === -1) DB.matches.push(m); else DB.matches[i] = m;
+  DB.matches.sort((a, b) => matchDate(b) - matchDate(a));
+  save();
+}
+function xchOpen(m){ STACK = [{ v: 'home' }]; go({ v: m.clock.status === 'finished' ? 'report' : 'live', id: m.id }); }
+
+/* ----- QR-Code scannen (Kamera in der App) ----- */
+const SCAN = { stream: null, raf: 0, busy: false, det: null, canvas: null, last: 0 };
+async function scanStart(){
+  const t = T();
+  closeSheet();
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ toast(t.xNoCamera); return; }
+  $('scan').hidden = false; $('scan-tip').textContent = t.xScanTip; $('scan-x').textContent = t.xScanCancel;
+  try {
+    let libP;
+    if('BarcodeDetector' in window){
+      libP = window.BarcodeDetector.getSupportedFormats()
+        .then(f => { if(f.indexOf('qr_code') !== -1) SCAN.det = new window.BarcodeDetector({ formats: ['qr_code'] }); else return loadLib('pp-scan'); })
+        .catch(() => loadLib('pp-scan'));
+    } else libP = loadLib('pp-scan');
+    SCAN.stream = await navigator.mediaDevices.getUserMedia({ audio: false,
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } });
+    if($('scan').hidden){ scanStop(); return; }   // inzwischen abgebrochen
+    const v = $('scan-v');
+    v.srcObject = SCAN.stream;
+    await v.play();
+    await libP;
+    scanLoop();
+  } catch(e){
+    scanStop();
+    toast(e && (e.name === 'NotAllowedError' || e.name === 'SecurityError') ? t.xCamDenied : e && e.message === t.xLibMissing ? t.xLibMissing : t.xNoCamera);
+  }
+}
+function scanLoop(){
+  if(!SCAN.stream) return;
+  SCAN.raf = requestAnimationFrame(scanLoop);
+  const now = performance.now();
+  if(SCAN.busy || now - SCAN.last < 160) return;
+  const v = $('scan-v');
+  if(v.readyState < 2 || !v.videoWidth) return;
+  SCAN.last = now; SCAN.busy = true;
+  scanFrame(v).then(txt => {
+    SCAN.busy = false;
+    if(!txt || !SCAN.stream) return;
+    if(XCH_RE.test(txt)){ vibrate(40); scanStop(); xchHandleText(txt); }
+    else $('scan-tip').textContent = T().xScanOther;
+  }, () => { SCAN.busy = false; });
+}
+async function scanFrame(v){
+  if(SCAN.det){ const r = await SCAN.det.detect(v); return r && r[0] ? r[0].rawValue : null; }
+  if(!window.jsQR) return null;
+  // mittiges Quadrat, hoechstens 800 px - schneller, und der Code liegt meist mittig
+  const s = Math.min(v.videoWidth, v.videoHeight), k = Math.min(1, 800 / s), w = Math.round(s * k);
+  const c = SCAN.canvas || (SCAN.canvas = document.createElement('canvas'));
+  if(c.width !== w){ c.width = w; c.height = w; }
+  const g = c.getContext('2d', { willReadFrequently: true });
+  g.drawImage(v, (v.videoWidth - s) / 2, (v.videoHeight - s) / 2, s, s, 0, 0, w, w);
+  const r = window.jsQR(g.getImageData(0, 0, w, w).data, w, w, { inversionAttempts: 'dontInvert' });
+  return r ? r.data : null;
+}
+function scanStop(){
+  cancelAnimationFrame(SCAN.raf); SCAN.busy = false;
+  if(SCAN.stream){ SCAN.stream.getTracks().forEach(tr => { try { tr.stop(); } catch(e){} }); SCAN.stream = null; }
+  const v = $('scan-v'); if(v){ try { v.pause(); } catch(e){} v.srcObject = null; }
+  $('scan').hidden = true;
+}
+const scanOpen = () => !$('scan').hidden;
+document.addEventListener('visibilitychange', () => { if(document.hidden && scanOpen()) scanStop(); });
+
+Object.assign(A, {
+  xSend(el){ openSendSheet(el.dataset.k === 'p' ? 'p' : 'r'); },
+  xOpt(el){ const k = el.dataset.kind, o = XOPT[k]; if(!o || !(el.dataset.k in o)) return; o[el.dataset.k] = !o[el.dataset.k]; saveXopt(); openSendSheet(k); },
+  xNames(el){ XOPT.names = el.dataset.v; saveXopt(); openSendSheet(el.dataset.kind); },
+  async xQr(el){
+    const kind = el.dataset.kind, t = T();
+    const r = await xchCodeFor(kind); if(!r) return;
+    if(r.code.length > XCH_QR_MAX){ toast(t.xTooBig); return; }
+    openSheet(t.xQrTitle, xchTitle(r.m), '<div class="qrbox">' + qrSvg(r.code) + '</div>' +
+      '<div class="hint" style="text-align:center;font-size:15px">' + esc(t.xQrHow) + '</div>' +
+      '<button class="btn soft" data-act="xSend" data-k="' + kind + '" style="margin-top:12px">' + esc(t.xBackToOptions) + '</button>');
+  },
+  async xMsg(el){
+    const kind = el.dataset.kind;
+    const r = await xchCodeFor(kind); if(!r) return;
+    closeSheet();
+    shareText(xchMessage(kind, r.m, r.code), xchTitle(r.m));
+  },
+  async xFile(el){
+    const kind = el.dataset.kind, t = T();
+    const r = await xchCodeFor(kind); if(!r) return;
+    closeSheet();
+    try {
+      await saveFile({ app: 'PitchPro', kind: 'pitchpro-share', v: 1, type: kind === 'p' ? 'matchday' : 'report', title: xchTitle(r.m), code: r.code },
+        fileName((kind === 'p' ? t.xFilePkg : t.xFileRep) + '_' + r.m.ownName + '_' + r.m.oppName));
+    } catch(e){ toast(String(e && e.message || e)); }
+  },
+  xReceive(){
+    const t = T();
+    openSheet(t.xRecvTitle, t.xRecvSub,
+      act('xScan', t.xScanBtn, t.xScanHint) + act('xPasteOpen', t.xPasteBtn, t.xPasteHint) + act('xFileOpen', t.xFileOpenBtn, t.xFileOpenHint));
+  },
+  xScan(){ scanStart(); },
+  xScanStop(){ scanStop(); },
+  xPasteOpen(){
+    const t = T();
+    openSheet(t.xPasteBtn, t.xPasteHint, '<textarea class="in" id="x-text" placeholder="PP1R.…"></textarea>' +
+      (navigator.clipboard && navigator.clipboard.readText ? '<button class="btn soft" data-act="clipboardTo" data-target="x-text" style="margin-top:8px">' + esc(t.fromClipboard) + '</button>' : '') +
+      '<button class="btn" data-act="xPasteDo" style="margin-top:8px">' + esc(t.xOpenCode) + '</button>');
+  },
+  xPasteDo(){ const v = $('x-text') ? $('x-text').value : ''; xchHandleText(v); },
+  xFileOpen(){
+    closeSheet();
+    pickFile((data, text) => {
+      if(data && data.kind === 'pitchpro-share' && typeof data.code === 'string') xchHandleText(data.code);
+      else if(XCH_RE.test(String(text || '').replace(/\s+/g, ''))) xchHandleText(text);
+      else if(data && data.kind === 'pitchpro-backup') importBackup(data);
+      else toast(T().xNoCode);
+    });
+  },
+  xTakePkg(){
+    const x = XCH_PENDING; if(!x || x.kind !== 'p') return;
+    const m = x.m; m.createdAt = Date.now();
+    XCH_PENDING = null;
+    const i = DB.matches.findIndex(y => y.id === m.id);
+    if(i === -1) DB.matches.unshift(m); else DB.matches[i] = m;
+    save(); toast(T().xPkgTaken); xchOpen(m);
+  },
+  xOpenSame(){ const x = XCH_PENDING; const m = x && matchById(x.m.id); XCH_PENDING = null; if(m) xchOpen(m); else closeSheet(); },
+  xSaveNew(){
+    const x = XCH_PENDING; if(!x) return;
+    XCH_PENDING = null;
+    xchStore(x.m); toast(T().xSaved); xchOpen(x.m);
+  },
+  xMergeSame(el){
+    const x = XCH_PENDING; if(!x) return;
+    const tgt = matchById(x.m.id); if(!tgt) return;
+    XCH_PENDING = null;
+    const res = xchMerge(tgt, x.m, el.dataset.mode === 'replace' ? 'replace' : 'add');
+    xchStore(res); toast(T().xMerged); xchOpen(res);
+  },
+  xMergeInto(el){
+    const x = XCH_PENDING; if(!x) return;
+    const tgt = matchById(el.dataset.id); if(!tgt) return;
+    XCH_PENDING = null;
+    const res = xchMerge(tgt, x.m, 'add');
+    xchStore(res); toast(T().xMerged); xchOpen(res);
+  }
+});
+
+Object.assign(I18N.de, {
+  xSendTitle: 'An PitchPro senden', xSendPkgTitle: 'Spieltag an Helfer senden',
+  xSendBtn: '📲 An PitchPro senden', xSendPkgBtn: '📲 Spieltag an Helfer senden',
+  xSendPkgHint: 'Ein Elternteil protokolliert mit seinem PitchPro und schickt dir danach den Bericht zurück.',
+  xWhat: 'Was soll mit?', xGoals: 'Tore', xAlways: 'immer', xCards: 'Karten',
+  xSubs: 'Wechsel und Spielzeiten', xSubsHint: 'Ohne Wechsel zeigt der Bericht keine Spielzeiten.',
+  xNotes: 'Notizen', xOpp: 'Spielernamen des Gegners',
+  xLineup: 'Aufstellung und Torwart', xLineupHint: 'Ohne: der Helfer legt die Startelf selbst fest.',
+  xReminders: 'Wechselerinnerung und faire Spielzeit', xPlan: 'Wechselplan', xAssists: 'Vorlagen abfragen', xOppSquad: 'Kader des Gegners',
+  xNamesTitle: 'Namen', xNamesFirst: 'Vornamen', xNamesNumber: 'Nur Rückennummern', xNamesFull: 'Voller Name',
+  xNamesHint: 'Beim Zusammenführen bleiben deine eigenen Namen erhalten.',
+  xQrBtn: '🔳 QR-Code zeigen', xMsgBtn: '💬 Als Nachricht teilen', xFileBtn: '📄 Als Datei teilen',
+  xNeedsApp: 'Der Empfänger braucht PitchPro. Es geht nichts über einen Server – der Bericht steckt im Code.',
+  xPkgHint: 'Nach dem Abpfiff schickt der Helfer den Bericht genauso zurück. Du kannst ihn dann mit deinem Spiel zusammenführen.',
+  xQrTitle: 'QR-Code', xQrHow: 'Auf dem anderen Handy: PitchPro → 📥 Empfangen → QR-Code scannen',
+  xBackToOptions: '‹ Auswahl ändern',
+  xTooBig: 'Zu viel für einen QR-Code – bitte als Nachricht oder Datei teilen, oder weniger auswählen.',
+  xMsgHead: '⚽ PitchPro-Spielbericht', xMsgHeadPkg: '📋 PitchPro-Spieltag',
+  xMsgHow: 'In PitchPro öffnen: 📥 Empfangen → Code einfügen (die ganze Nachricht kopieren).',
+  xFileRep: 'PitchPro_Bericht', xFilePkg: 'PitchPro_Spieltag',
+  xRecvBtn: '📥 Bericht oder Spieltag empfangen', xRecvTitle: 'Empfangen', xRecvSub: 'Spielbericht oder Spieltag aus einem anderen PitchPro',
+  xScanBtn: '📷 QR-Code scannen', xScanHint: 'Den Code auf dem anderen Handy mit der Kamera erfassen',
+  xPasteBtn: '💬 Code aus Nachricht einfügen', xPasteHint: 'Die ganze Nachricht kopieren und hier einfügen',
+  xFileOpenBtn: '📄 Datei öffnen', xFileOpenHint: 'Eine geteilte PitchPro-Datei auswählen',
+  xOpenCode: 'Öffnen', xNoCode: 'Kein PitchPro-Code gefunden.', xBadCode: 'Der Code ist unvollständig oder beschädigt.',
+  xLibMissing: 'Diese Funktion fehlt in dieser Installation (Ordner lib).',
+  xNoCamera: 'Kamera nicht verfügbar – bitte den Code als Nachricht oder Datei schicken lassen.',
+  xCamDenied: 'Kein Zugriff auf die Kamera. In den Einstellungen des Handys für PitchPro erlauben.',
+  xScanTip: 'QR-Code in den Rahmen halten', xScanOther: 'Das ist kein PitchPro-Code.', xScanCancel: 'Abbrechen',
+  xRecvRepTitle: 'Spielbericht empfangen', xRecvPkgTitle: 'Spieltag empfangen',
+  xRepInfo: (g, subs, cards) => 'Enthält Tore' + (cards ? ', Karten' : '') + (subs ? ', Wechsel und Spielzeiten.' : ' – ohne Wechsel und Spielzeiten.'),
+  xPkgInfo: n => n + ' Spieler. Das Spiel wird angelegt; du protokollierst wie gewohnt und schickst den Bericht nach dem Abpfiff über 📲 zurück.',
+  xPkgTake: 'Spiel anlegen', xPkgTaken: 'Spieltag übernommen.', xPkgExists: 'Dieses Spiel ist schon vorhanden.',
+  xOpenMatch: 'Spiel öffnen', xPkgReplace: 'Neu übernehmen', xPkgReplaceHint: 'Ersetzt das noch nicht angepfiffene Spiel',
+  xSameMatch: 'Dieses Spiel hast du schon.',
+  xMergeAdd: 'Zusammenführen', xMergeAddHint: 'Fehlende Ereignisse ergänzen, deine Einträge bleiben',
+  xMergeReplace: 'Ersetzen', xMergeReplaceHint: 'Ereignisse und Spielzeit aus dem empfangenen Bericht übernehmen',
+  xSaveNew: 'Als eigenes Spiel speichern', xOrMerge: 'Oder mit einem deiner Spiele zusammenführen',
+  xSaved: 'Spielbericht gespeichert.', xMerged: 'Zusammengeführt.',
+  xReceivedNote: '📥 Empfangener Bericht', xNoSubsNote: 'ohne Wechsel, daher keine Spielzeiten',
+  xHelperNote: 'Spieltag vom Trainer: nach dem Abpfiff im Bericht über „📲 An PitchPro senden“ zurückschicken.',
+  xPlayerN: n => 'Spieler ' + n
+});
+Object.assign(I18N.en, {
+  xSendTitle: 'Send to PitchPro', xSendPkgTitle: 'Send matchday to a helper',
+  xSendBtn: '📲 Send to PitchPro', xSendPkgBtn: '📲 Send matchday to a helper',
+  xSendPkgHint: 'A parent logs the match in their PitchPro and sends the report back to you afterwards.',
+  xWhat: 'What to include', xGoals: 'Goals', xAlways: 'always', xCards: 'Cards',
+  xSubs: 'Substitutions and playing time', xSubsHint: 'Without substitutions the report shows no playing time.',
+  xNotes: 'Notes', xOpp: "Opponent's player names",
+  xLineup: 'Lineup and goalkeeper', xLineupHint: 'Without: the helper picks the starting lineup.',
+  xReminders: 'Substitution reminder and fair playing time', xPlan: 'Substitution plan', xAssists: 'Ask for assists', xOppSquad: "Opponent's squad",
+  xNamesTitle: 'Names', xNamesFirst: 'First names', xNamesNumber: 'Shirt numbers only', xNamesFull: 'Full name',
+  xNamesHint: 'When merging, your own names are kept.',
+  xQrBtn: '🔳 Show QR code', xMsgBtn: '💬 Share as message', xFileBtn: '📄 Share as file',
+  xNeedsApp: 'The recipient needs PitchPro. No server involved – the report is inside the code.',
+  xPkgHint: 'After the final whistle the helper sends the report back the same way. You can then merge it with your match.',
+  xQrTitle: 'QR code', xQrHow: 'On the other phone: PitchPro → 📥 Receive → Scan QR code',
+  xBackToOptions: '‹ Change selection',
+  xTooBig: 'Too much for a QR code – please share as message or file, or select less.',
+  xMsgHead: '⚽ PitchPro match report', xMsgHeadPkg: '📋 PitchPro matchday',
+  xMsgHow: 'Open in PitchPro: 📥 Receive → Paste code (copy the whole message).',
+  xFileRep: 'PitchPro_Report', xFilePkg: 'PitchPro_Matchday',
+  xRecvBtn: '📥 Receive report or matchday', xRecvTitle: 'Receive', xRecvSub: 'Match report or matchday from another PitchPro',
+  xScanBtn: '📷 Scan QR code', xScanHint: 'Point the camera at the code on the other phone',
+  xPasteBtn: '💬 Paste code from message', xPasteHint: 'Copy the whole message and paste it here',
+  xFileOpenBtn: '📄 Open file', xFileOpenHint: 'Choose a shared PitchPro file',
+  xOpenCode: 'Open', xNoCode: 'No PitchPro code found.', xBadCode: 'The code is incomplete or damaged.',
+  xLibMissing: 'This feature is missing in this installation (lib folder).',
+  xNoCamera: 'Camera not available – please have the code sent as a message or file.',
+  xCamDenied: "No camera access. Allow it for PitchPro in the phone's settings.",
+  xScanTip: 'Hold the QR code inside the frame', xScanOther: 'This is not a PitchPro code.', xScanCancel: 'Cancel',
+  xRecvRepTitle: 'Match report received', xRecvPkgTitle: 'Matchday received',
+  xRepInfo: (g, subs, cards) => 'Contains goals' + (cards ? ', cards' : '') + (subs ? ', substitutions and playing time.' : ' – without substitutions and playing time.'),
+  xPkgInfo: n => n + ' players. The match will be created; log it as usual and send the report back via 📲 after the final whistle.',
+  xPkgTake: 'Create match', xPkgTaken: 'Matchday added.', xPkgExists: 'This match already exists.',
+  xOpenMatch: 'Open match', xPkgReplace: 'Take over again', xPkgReplaceHint: 'Replaces the match that has not kicked off yet',
+  xSameMatch: 'You already have this match.',
+  xMergeAdd: 'Merge', xMergeAddHint: 'Add missing events, your entries stay',
+  xMergeReplace: 'Replace', xMergeReplaceHint: 'Use events and playing time from the received report',
+  xSaveNew: 'Save as separate match', xOrMerge: 'Or merge with one of your matches',
+  xSaved: 'Match report saved.', xMerged: 'Merged.',
+  xReceivedNote: '📥 Received report', xNoSubsNote: 'without substitutions, so no playing time',
+  xHelperNote: "Matchday from the coach: after the final whistle, send it back via '📲 Send to PitchPro' in the report.",
+  xPlayerN: n => 'Player ' + n
+});
+
 
 /* Tippen und langes Druecken */
 let pressTimer = null, longFired = false;
