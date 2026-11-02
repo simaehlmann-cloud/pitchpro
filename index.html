@@ -1246,6 +1246,7 @@ function teamStats(teamId, range){
       if(res > 0) r.w++; else if(res === 0) r.d++; else r.l++;
     });
     const subbedIn = new Set(m.events.filter(e => e.type === 'sub' && e.side === 'own').map(e => e.inId));
+    const noTimes = !!(m.recv && !m.recv.subs);   // empfangen ohne Wechsel: nur Tore und Karten zaehlen
     m.ownPlayers.forEach(p => {
       const kp = team && team.players.find(x => x.id === p.id);
       const a = P[p.id] || (P[p.id] = { id: p.id, name: kp ? kp.name : p.name, number: kp ? kp.number : p.number,
@@ -1253,9 +1254,12 @@ function teamStats(teamId, range){
         goals: 0, pens: 0, own: 0, assists: 0, yellow: 0, yellowRed: 0, red: 0 });
       const ps = st.stats[p.id];
       const started = m.startingIds.indexOf(p.id) !== -1;
-      a.squad++; a.possible += total; a.min += ps.played;
-      if(started) a.starts++;
-      if(started || subbedIn.has(p.id) || ps.played > 0) a.apps++;
+      a.squad++;
+      if(!noTimes){
+        a.possible += total; a.min += ps.played;
+        if(started) a.starts++;
+        if(started || subbedIn.has(p.id) || ps.played > 0) a.apps++;
+      }
       a.goals += ps.goals; a.pens += ps.pens; a.own += ps.own; a.assists += ps.assists;
       a.yellow += ps.yellow; a.yellowRed += ps.yellowRed; a.red += ps.red;
     });
@@ -2359,13 +2363,14 @@ function viewPlayer(r){
     const st = derive(m, m.clock.completedMs), ps = st.stats[a.id];
     const started = m.startingIds.indexOf(a.id) !== -1;
     const came = !started && (m.events.some(e => e.type === 'sub' && e.side === 'own' && e.inId === a.id) || ps.played > 0);
+    const noTimes = !!(m.recv && !m.recv.subs);
     const res = matchResult(m, st.score);
     const extra = (ps.goals ? ' · ⚽' + (ps.goals > 1 ? '×' + ps.goals : '') : '') + (ps.assists ? ' · ' + t.assistShort + (ps.assists > 1 ? '×' + ps.assists : '') : '') +
       (ps.yellow ? ' · 🟨' : '') + (ps.yellowRed ? ' · 🟨🟥' : '') + (ps.red ? ' · 🟥' : '');
     return '<button class="list-row" data-act="openMatch" data-id="' + m.id + '"><span class="res" style="background:' +
       (res > 0 ? 'var(--green)' : res === 0 ? '#7a7a7a' : 'var(--red)') + '">' + esc(res > 0 ? t.resW : res === 0 ? t.resD : t.resL) + '</span>' +
       '<span class="main"><div class="t1">' + esc((m.isHome ? '' : '@ ') + m.oppName) + '</div><div class="t2 num">' + fmtDate(matchDate(m)) + ' · ' +
-      esc(started ? t.started : came ? t.subbedIn : t.notUsed) + (started || came ? ' · ' + Math.round(ps.played / 60000) + ' min' : '') + esc(extra) + '</div></span>' +
+      esc(noTimes ? t.xInSquad : started ? t.started : came ? t.subbedIn : t.notUsed) + (!noTimes && (started || came) ? ' · ' + Math.round(ps.played / 60000) + ' min' : '') + esc(extra) + '</div></span>' +
       '<span class="big num">' + scoreText(m, st.score) + '</span></button>';
   }).join('') + '<div class="hint">' + esc(t.profileHint) + '</div>';
   return h;
@@ -3586,7 +3591,9 @@ async function xchHandleText(text){
   if(!m){ toast(t.xBadCode); return; }
   const inc = p.inc && typeof p.inc === 'object' ? p.inc : {};
   m.recv = { at: Date.now(), kind: p.k, subs: p.k === 'p' || inc.subs !== false, cards: p.k === 'p' || inc.cards !== false };
-  XCH_PENDING = { kind: p.k, m };
+  // Kader: vorhandenes eigenes Team mit gleichem Namen vorauswaehlen, sonst nicht speichern
+  const same = DB.teams.find(tm => tm.isOwn && tm.name.trim().toLowerCase() === m.ownName.trim().toLowerCase());
+  XCH_PENDING = { kind: p.k, m, team: same ? same.id : 'none' };
   xchOffer();
 }
 /* Kandidaten zum Zusammenfuehren: gleiches Spiel (ID) oder gleicher Gegner bzw. Tag */
@@ -3594,6 +3601,48 @@ function xchCandidates(inc){
   const day = 3 * 86400000, opp = inc.oppName.trim().toLowerCase();
   return DB.matches.filter(x => x.id !== inc.id && (Math.abs(matchDate(x) - matchDate(inc)) <= day ||
     (x.oppName.trim().toLowerCase() === opp && Math.abs(matchDate(x) - matchDate(inc)) <= 14 * day))).slice(0, 4);
+}
+/* Auswahl "Kader": nicht speichern / als neues Team / einem eigenen Team zuordnen */
+function xchTeamBlock(x){
+  const t = T(), own = DB.teams.filter(tm => tm.isOwn);
+  if(x.team !== 'none' && x.team !== 'new' && !teamById(x.team)) x.team = 'none';
+  const chip = (v, l) => '<button class="chip' + (x.team === v ? ' on' : '') + '" data-act="xTeam" data-v="' + esc(v) + '">' + esc(l) + '</button>';
+  return '<div class="hint" style="margin:14px 2px 6px;font-weight:700">' + esc(t.xSquadTitle(x.m.ownPlayers.length)) + '</div><div class="chips">' +
+    chip('none', t.xSquadNone) + chip('new', t.xSquadNew(x.m.ownName)) + own.map(tm => chip(tm.id, '→ ' + tm.name)).join('') + '</div>' +
+    '<div class="hint" style="margin-bottom:14px">' + esc(x.team === 'none' ? t.xSquadNoneHint : x.team === 'new' ? t.xSquadNewHint : t.xSquadAssignHint) + '</div>';
+}
+/* Kader anwenden: Team anlegen oder Spieler einem Team zuordnen (Nummer, sonst Vorname).
+   Spieler-IDs im Spiel werden auf die IDs des Teams umgestellt - dann zaehlt die Statistik richtig. */
+function xchApplyTeam(m, sel){
+  if(!sel || sel === 'none') return m;
+  const mx = JSON.parse(JSON.stringify(m));
+  if(sel === 'new'){
+    const team = { id: uid(), name: mx.ownName.slice(0, 50), isOwn: true,
+      players: mx.ownPlayers.map(p => ({ id: p.id, name: p.name, number: p.number, keeper: p.id === mx.keeperId, sel: true })) };
+    DB.teams.push(team);
+    if(!activeTeam()) DB.activeTeamId = team.id;
+    mx.ownTeamId = team.id;
+    return mx;
+  }
+  const team = teamById(sel); if(!team) return m;
+  const first = n => String(n || '').split(' ')[0].toLowerCase();
+  const used = new Set(), map = {};
+  mx.ownPlayers.forEach(p => {
+    const free = q => !used.has(q.id);
+    const hit = team.players.find(q => q.id === p.id && free(q)) ||
+      (p.number != null && team.players.find(q => q.number === p.number && free(q))) ||
+      (p.name.charAt(0) !== '#' && team.players.find(q => first(q.name) === first(p.name) && free(q)));
+    if(hit){ used.add(hit.id); map[p.id] = hit.id; return; }
+    const np = { id: team.players.some(q => q.id === p.id) ? uid() : p.id, name: p.name, number: p.number, keeper: p.id === mx.keeperId, sel: true };
+    team.players.push(np); used.add(np.id); map[p.id] = np.id;
+  });
+  const mp = id => id && map[id] ? map[id] : id;
+  mx.ownPlayers = mx.ownPlayers.map(p => { const q = team.players.find(z => z.id === map[p.id]); return { id: map[p.id], name: q ? q.name : p.name, number: q ? q.number : p.number }; });
+  mx.events = mx.events.map(e => { const c = Object.assign({}, e); ['playerId', 'assistId', 'outId', 'inId'].forEach(k => { if(c[k]) c[k] = mp(c[k]); }); return c; });
+  mx.startingIds = mx.startingIds.map(mp); mx.keeperId = mp(mx.keeperId);
+  if(mx.plan) mx.plan = mx.plan.map(st => Object.assign({}, st, { outs: st.outs.map(mp), ins: st.ins.map(mp) }));
+  mx.ownTeamId = team.id; mx.ownName = team.name;
+  return cleanMatch(mx) || m;
 }
 function xchOffer(){
   const t = T(), x = XCH_PENDING; if(!x) return;
@@ -3607,7 +3656,7 @@ function xchOffer(){
       h += '<div class="hint" style="margin:0 2px 10px;color:var(--amber);font-weight:700">' + esc(t.xPkgExists) + '</div>' +
         act('xOpenSame', t.xOpenMatch, '');
       if(same.clock.status === 'pre' && !same.events.length) h += act('xTakePkg', t.xPkgReplace, t.xPkgReplaceHint);
-    } else h += '<button class="btn lg" data-act="xTakePkg">' + esc(t.xPkgTake) + '</button>';
+    } else h += xchTeamBlock(x) + '<button class="btn lg" data-act="xTakePkg">' + esc(t.xPkgTake) + '</button>';
   } else {
     h += '<div class="hint" style="margin:0 2px 12px">' + esc(t.xRepInfo(m.events.filter(e => e.type === 'goal').length, x.m.recv.subs, x.m.recv.cards)) + '</div>';
     if(same){
@@ -3615,7 +3664,7 @@ function xchOffer(){
         act('xMergeSame', t.xMergeAdd, t.xMergeAddHint, '', ' data-mode="add"') +
         act('xMergeSame', t.xMergeReplace, t.xMergeReplaceHint, '', ' data-mode="replace"');
     } else {
-      h += '<button class="btn lg" data-act="xSaveNew">' + esc(t.xSaveNew) + '</button>';
+      h += xchTeamBlock(x) + '<button class="btn lg" data-act="xSaveNew">' + esc(t.xSaveNew) + '</button>';
       const cand = xchCandidates(m);
       if(cand.length) h += '<div class="hint" style="margin:16px 2px 6px;font-weight:700">' + esc(t.xOrMerge) + '</div>' +
         cand.map(c => act('xMergeInto', xchTitle(c), fmtDate(matchDate(c)) + ' · ' + t.xMergeAddHint, '', ' data-id="' + c.id + '"')).join('');
@@ -3749,6 +3798,7 @@ document.addEventListener('visibilitychange', () => { if(document.hidden && scan
 
 Object.assign(A, {
   xSend(el){ openSendSheet(el.dataset.k === 'p' ? 'p' : 'r'); },
+  xTeam(el){ if(!XCH_PENDING) return; XCH_PENDING.team = el.dataset.v; xchOffer(); },
   xOpt(el){ const k = el.dataset.kind, o = XOPT[k]; if(!o || !(el.dataset.k in o)) return; o[el.dataset.k] = !o[el.dataset.k]; saveXopt(); openSendSheet(k); },
   xNames(el){ XOPT.names = el.dataset.v; saveXopt(); openSendSheet(el.dataset.kind); },
   async xQr(el){
@@ -3799,7 +3849,7 @@ Object.assign(A, {
   },
   xTakePkg(){
     const x = XCH_PENDING; if(!x || x.kind !== 'p') return;
-    const m = x.m; m.createdAt = Date.now();
+    const m = xchApplyTeam(x.m, x.team); m.createdAt = Date.now();
     XCH_PENDING = null;
     const i = DB.matches.findIndex(y => y.id === m.id);
     if(i === -1) DB.matches.unshift(m); else DB.matches[i] = m;
@@ -3809,7 +3859,8 @@ Object.assign(A, {
   xSaveNew(){
     const x = XCH_PENDING; if(!x) return;
     XCH_PENDING = null;
-    xchStore(x.m); toast(T().xSaved); xchOpen(x.m);
+    const m = xchApplyTeam(x.m, x.team);
+    xchStore(m); toast(T().xSaved); xchOpen(m);
   },
   xMergeSame(el){
     const x = XCH_PENDING; if(!x) return;
@@ -3868,7 +3919,12 @@ Object.assign(I18N.de, {
   xSaved: 'Spielbericht gespeichert.', xMerged: 'Zusammengeführt.',
   xReceivedNote: '📥 Empfangener Bericht', xNoSubsNote: 'ohne Wechsel, daher keine Spielzeiten',
   xHelperNote: 'Spieltag vom Trainer: nach dem Abpfiff im Bericht über „📲 An PitchPro senden“ zurückschicken.',
-  xPlayerN: n => 'Spieler ' + n
+  xPlayerN: n => 'Spieler ' + n,
+  xSquadTitle: n => 'Kader (' + n + ' Spieler)', xSquadNone: 'Nicht speichern', xSquadNew: n => 'Als Team „' + n + '“',
+  xSquadNoneHint: 'Die Spieler stehen nur in diesem Spiel.',
+  xSquadNewHint: 'Legt die Mannschaft mit diesen Spielern unter Teams & Kader an. Das Spiel zählt in ihrer Statistik.',
+  xSquadAssignHint: 'Spieler werden über Rückennummer, sonst Vornamen erkannt; neue werden ergänzt. Das Spiel zählt in der Statistik dieses Teams.',
+  xInSquad: 'dabei'
 });
 Object.assign(I18N.en, {
   xSendTitle: 'Send to PitchPro', xSendPkgTitle: 'Send matchday to a helper',
@@ -3911,7 +3967,12 @@ Object.assign(I18N.en, {
   xSaved: 'Match report saved.', xMerged: 'Merged.',
   xReceivedNote: '📥 Received report', xNoSubsNote: 'without substitutions, so no playing time',
   xHelperNote: "Matchday from the coach: after the final whistle, send it back via '📲 Send to PitchPro' in the report.",
-  xPlayerN: n => 'Player ' + n
+  xPlayerN: n => 'Player ' + n,
+  xSquadTitle: n => 'Squad (' + n + ' players)', xSquadNone: "Don't save", xSquadNew: n => "As team '" + n + "'",
+  xSquadNoneHint: 'The players only appear in this match.',
+  xSquadNewHint: 'Creates the team with these players under Teams & squads. The match counts in its statistics.',
+  xSquadAssignHint: 'Players are matched by shirt number, otherwise first name; new ones are added. The match counts in this team’s statistics.',
+  xInSquad: 'in squad'
 });
 
 

@@ -47,6 +47,9 @@ Cordova-Builds über GitHub Actions für Google Play und den App Store, Deutsch/
   ergänzen, doppelte werden am Inhalt erkannt) oder **Ersetzen**; sonst als eigenes Spiel speichern oder
   mit einem Spiel vom selben Tag/gegen denselben Gegner zusammenführen (Spieler über Nummer bzw. Vorname).
   Empfangene Berichte ohne Wechsel zeigen keine Spielzeiten.
+  Beim Empfangen lässt sich der Kader (Spieler dieses Spiels) **nicht speichern** (Standard), **als neues Team**
+  anlegen oder **einem eigenen Team zuordnen** (Rückennummer, sonst Vorname; gleichnamiges Team ist
+  vorausgewählt). Dann zählt das Spiel in der Statistik dieses Teams – ohne Wechsel nur Tore und Karten.
 - **Statistik** – über alle abgeschlossenen Spiele eines Teams: Bilanz (gesamt, Heim, Auswärts),
   pro Spieler Einsätze, Startelf, Minuten, Ø Minuten, Anteil an der Spielzeit, Tore (Elfmeter),
   Eigentore, Karten. Zeitraum Saison / Hinrunde / Rückrunde / Gesamt (Saison ab 1. Juli),
