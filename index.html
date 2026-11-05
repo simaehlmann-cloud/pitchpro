@@ -3,8 +3,12 @@
 <head>
 <meta charset="utf-8" />
 <!-- Content-Security-Policy: PitchPro laedt nichts nach. Alles steckt in
-     dieser Datei, die App baut von sich aus keine Verbindung nach aussen auf. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' data: blob:; font-src 'self'; media-src 'self' data: blob:; object-src 'none'; base-uri 'self'; form-action 'none'" />
+     dieser Datei, die App baut von sich aus keine Verbindung nach aussen auf.
+     'wasm-unsafe-eval' braucht der QR-Scanner (lib/pp-zxing.wasm, WebAssembly).
+     iOS 15 bis 16.3 kennt diesen Schluessel noch nicht und erlaubt WebAssembly
+     nur mit 'unsafe-eval' - deshalb stehen beide da. Geladen wird trotzdem nur
+     Eigenes ('self'). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' data: blob:; font-src 'self'; media-src 'self' data: blob:; object-src 'none'; base-uri 'self'; form-action 'none'" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
 <meta name="theme-color" content="#111111" />
 <title>PitchPro</title>
@@ -302,7 +306,7 @@ button.sp:active { background:var(--surface2); }
   max-width:90vw; text-align:center; }
 #toast.show { opacity:1; }
 /* Teilen per QR-Code: immer schwarz auf weiss, auch im dunklen Design */
-.qrbox { background:#fff; border-radius:16px; padding:10px; margin:4px auto 10px; max-width:380px; }
+.qrbox { background:#fff; border-radius:16px; padding:10px; margin:4px auto 10px; max-width:520px; }
 .qrbox svg { display:block; width:100%; height:auto; }
 #scan { position:fixed; inset:0; z-index:40; background:#000; }
 #scan[hidden] { display:none; }
@@ -772,7 +776,7 @@ const BRIDGE_ORIGIN = location.origin && location.origin !== 'null' ? location.o
 let bridgeLastClock = null, bridgeLastReminder = '';
 const bridgeSent = {};   // matchId -> zuletzt gesendeter Stand (JSON)
 const bridgeCaps = { share: false };   // was der Kaderplaner nativ kann (kp:caps)
-const APP_VERSION = '1.1.0';   // gleich halten mit version="..." in config.xml
+const APP_VERSION = '1.1.1';   // gleich halten mit version="..." in config.xml
 const DEFAULT_SETTINGS = { periods: 2, periodMinutes: 25, playersOnField: 7, subIntervalMinutes: 0, fairPlay: false, assists: false };
 
 /* Kennungen: nur Buchstaben, Ziffern, _ und - (sie stehen in data-Attributen) */
@@ -3368,8 +3372,8 @@ function importSquads(data){
    Spieltag      (P): dieselbe Spiel-ID und Spieler-IDs wie beim Trainer.
                       Der Helfer protokolliert, schickt den Bericht zurueck,
                       beim Trainer wird er zusammengefuehrt (gleiche ID).
-   Bibliotheken (lib/pp-share.js, lib/pp-scan.js) werden erst bei Bedarf
-   geladen. Im Kaderplaner muss der Ordner lib/ mit nach pitch/.
+   Bibliotheken (lib/pp-share.js, lib/pp-zxing.js + .wasm, lib/pp-scan.js)
+   werden erst bei Bedarf geladen. Im Kaderplaner muss der Ordner lib/ mit nach pitch/.
 --------------------------------------------------------------------- */
 const XCH_RE = /PP1([RP])\.([A-Za-z0-9_-]{8,})/;
 const XCH_QR_MAX = 1700;   // Zeichen - darueber wird der QR-Code zu dicht zum Abscannen
@@ -3757,21 +3761,53 @@ function xchStore(m){
 function xchOpen(m){ STACK = [{ v: 'home' }]; go({ v: m.clock.status === 'finished' ? 'report' : 'live', id: m.id }); }
 
 /* ----- QR-Code scannen (Kamera in der App) ----- */
-const SCAN = { stream: null, raf: 0, busy: false, det: null, canvas: null, last: 0 };
+const SCAN = { stream: null, raf: 0, busy: false, det: null, zx: null, canvas: null, last: 0 };
+/* Reihenfolge der Leser:
+   1. BarcodeDetector - eingebauter Scanner (Android-WebView). Am robustesten.
+   2. ZXing (lib/pp-zxing.js + pp-zxing.wasm) - iOS hat keinen BarcodeDetector.
+      jsQR allein schaffte dort die dichten Bericht-Codes (rund 110 x 110 Felder)
+      vom Bildschirm eines anderen Geraets praktisch nie; ZXing schon.
+   3. jsQR (lib/pp-scan.js) - nur falls WebAssembly nicht startet. */
+function libBytes(path){
+  return fetch(path).then(r => { if(!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
+    .catch(() => new Promise((res, rej) => {   // Fallback, falls fetch das lokale Schema nicht kann
+      const x = new XMLHttpRequest(); x.open('GET', path); x.responseType = 'arraybuffer';
+      x.onload = () => x.response && x.response.byteLength ? res(x.response) : rej(new Error('leer'));
+      x.onerror = () => rej(new Error('xhr')); x.send();
+    }));
+}
+let zxingP = null;
+function zxingLoad(){
+  if(!zxingP) zxingP = (async () => {
+    if(typeof WebAssembly !== 'object') throw new Error('kein WebAssembly');
+    await loadLib('pp-zxing');
+    const bin = await libBytes('lib/pp-zxing.wasm');
+    // wasmBinary + locateFile: die Bibliothek wuerde sonst aus dem Netz (CDN) laden
+    await window.ZXingWASM.prepareZXingModule({ overrides: { wasmBinary: bin, locateFile: f => 'lib/' + f }, fireImmediately: true });
+    return window.ZXingWASM;
+  })().catch(e => { zxingP = null; throw e; });
+  return zxingP;
+}
+async function scanPrepare(){
+  if('BarcodeDetector' in window){
+    try {
+      const f = await window.BarcodeDetector.getSupportedFormats();
+      if(f.indexOf('qr_code') !== -1){ SCAN.det = new window.BarcodeDetector({ formats: ['qr_code'] }); return; }
+    } catch(e){}
+  }
+  try { SCAN.zx = await zxingLoad(); return; } catch(e){}
+  await loadLib('pp-scan');
+}
 async function scanStart(){
   const t = T();
   closeSheet();
   if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ toast(t.xNoCamera); return; }
   $('scan').hidden = false; $('scan-tip').textContent = t.xScanTip; $('scan-x').textContent = t.xScanCancel;
   try {
-    let libP;
-    if('BarcodeDetector' in window){
-      libP = window.BarcodeDetector.getSupportedFormats()
-        .then(f => { if(f.indexOf('qr_code') !== -1) SCAN.det = new window.BarcodeDetector({ formats: ['qr_code'] }); else return loadLib('pp-scan'); })
-        .catch(() => loadLib('pp-scan'));
-    } else libP = loadLib('pp-scan');
+    const libP = scanPrepare();
+    // Full HD: die Bericht-Codes sind dicht, jedes Pixel mehr pro QR-Feld hilft
     SCAN.stream = await navigator.mediaDevices.getUserMedia({ audio: false,
-      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } });
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } } });
     if($('scan').hidden){ scanStop(); return; }   // inzwischen abgebrochen
     const v = $('scan-v');
     v.srcObject = SCAN.stream;
@@ -3800,14 +3836,20 @@ function scanLoop(){
 }
 async function scanFrame(v){
   if(SCAN.det){ const r = await SCAN.det.detect(v); return r && r[0] ? r[0].rawValue : null; }
-  if(!window.jsQR) return null;
-  // mittiges Quadrat, hoechstens 800 px - schneller, und der Code liegt meist mittig
-  const s = Math.min(v.videoWidth, v.videoHeight), k = Math.min(1, 800 / s), w = Math.round(s * k);
+  if(!SCAN.zx && !window.jsQR) return null;
+  // mittiges Quadrat in voller Kamera-Aufloesung (hoechstens 1080 px) - der Code
+  // liegt meist mittig, und verkleinern wuerde die feinen QR-Felder verwischen
+  const s = Math.min(v.videoWidth, v.videoHeight), k = Math.min(1, 1080 / s), w = Math.round(s * k);
   const c = SCAN.canvas || (SCAN.canvas = document.createElement('canvas'));
   if(c.width !== w){ c.width = w; c.height = w; }
   const g = c.getContext('2d', { willReadFrequently: true });
   g.drawImage(v, (v.videoWidth - s) / 2, (v.videoHeight - s) / 2, s, s, 0, 0, w, w);
-  const r = window.jsQR(g.getImageData(0, 0, w, w).data, w, w, { inversionAttempts: 'dontInvert' });
+  const img = g.getImageData(0, 0, w, w);
+  if(SCAN.zx){
+    const z = await SCAN.zx.readBarcodes(img, { formats: ['QRCode'], tryHarder: true, maxNumberOfSymbols: 1 });
+    return z && z[0] && z[0].isValid ? z[0].text : null;
+  }
+  const r = window.jsQR(img.data, w, w, { inversionAttempts: 'dontInvert' });
   return r ? r.data : null;
 }
 function scanStop(){
@@ -3915,7 +3957,7 @@ Object.assign(I18N.de, {
   xQrBtn: '🔳 QR-Code zeigen', xMsgBtn: '💬 Als Nachricht teilen', xFileBtn: '📄 Als Datei teilen',
   xNeedsApp: 'Der Empfänger braucht PitchPro. Es geht nichts über einen Server – der Bericht steckt im Code.',
   xPkgHint: 'Nach dem Abpfiff schickt der Helfer den Bericht genauso zurück. Du kannst ihn dann mit deinem Spiel zusammenführen.',
-  xQrTitle: 'QR-Code', xQrHow: 'Auf dem anderen Handy: PitchPro → 📥 Empfangen → QR-Code scannen',
+  xQrTitle: 'QR-Code', xQrHow: 'Auf dem anderen Gerät: PitchPro → 📥 Empfangen → QR-Code scannen. Tipp: Bildschirm hell stellen.',
   xBackToOptions: '‹ Auswahl ändern',
   xTooBig: 'Zu viel für einen QR-Code – bitte als Nachricht oder Datei teilen, oder weniger auswählen.',
   xMsgHead: '⚽ PitchPro-Spielbericht', xMsgHeadPkg: '📋 PitchPro-Spieltag',
@@ -3963,7 +4005,7 @@ Object.assign(I18N.en, {
   xQrBtn: '🔳 Show QR code', xMsgBtn: '💬 Share as message', xFileBtn: '📄 Share as file',
   xNeedsApp: 'The recipient needs PitchPro. No server involved – the report is inside the code.',
   xPkgHint: 'After the final whistle the helper sends the report back the same way. You can then merge it with your match.',
-  xQrTitle: 'QR code', xQrHow: 'On the other phone: PitchPro → 📥 Receive → Scan QR code',
+  xQrTitle: 'QR code', xQrHow: 'On the other device: PitchPro → 📥 Receive → Scan QR code. Tip: turn your screen brightness up.',
   xBackToOptions: '‹ Change selection',
   xTooBig: 'Too much for a QR code – please share as message or file, or select less.',
   xMsgHead: '⚽ PitchPro match report', xMsgHeadPkg: '📋 PitchPro matchday',

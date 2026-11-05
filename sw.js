@@ -7,7 +7,7 @@
  *   - Uebrige Assets (Icons, datenschutz.html): CACHE FIRST,
  *     da sie sich praktisch nie aendern und offline sofort da sein muessen.
  */
-const CACHE_NAME = 'pitchpro-v1.2';
+const CACHE_NAME = 'pitchpro-v1.3';
 const SHELL = './index.html';
 const ASSETS = [
   './',
@@ -20,7 +20,9 @@ const ASSETS = [
   './datenschutz-en.html',
   './impressum-en.html',
   './lib/pp-share.js',
-  './lib/pp-scan.js'
+  './lib/pp-scan.js',
+  './lib/pp-zxing.js',
+  './lib/pp-zxing.wasm'
 ];
 
 self.addEventListener('install', event => {

@@ -72,8 +72,10 @@ sie lässt sich auch über *Sicherung importieren* öffnen. Typische Größe ein
 ab 1700 Zeichen bietet die App keinen QR-Code mehr an (zu dicht), Nachricht und Datei gehen immer.
 
 Bibliotheken in `lib/` (Lizenzen in `lib/LICENSES.txt`), werden erst bei Bedarf geladen:
-`pp-share.js` (fflate, qrcode-generator) und `pp-scan.js` (jsQR; auf Android nutzt die App, wenn vorhanden,
-den eingebauten `BarcodeDetector`). Kamera: Android `CAMERA` (nicht Pflicht), iOS `NSCameraUsageDescription`
+`pp-share.js` (fflate, qrcode-generator), `pp-zxing.js` + `pp-zxing.wasm` (ZXing als WebAssembly) und
+`pp-scan.js` (jsQR). Beim Scannen nutzt die App zuerst den eingebauten `BarcodeDetector` (Android), sonst
+ZXing (iOS), und nur wenn WebAssembly nicht startet jsQR. Dafuer erlaubt die CSP `'wasm-unsafe-eval'`
+(und fuer iOS 15–16.3 `'unsafe-eval'`); geladen wird weiterhin nur aus `'self'`. Kamera: Android `CAMERA` (nicht Pflicht), iOS `NSCameraUsageDescription`
 und `AllowInlineMediaPlayback` – beides in `config.xml`.
 
 ## Eingebettet im U11-Kaderplaner
